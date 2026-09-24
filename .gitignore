@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.tsbuildinfo
+test-results/
+playwright-report/
+.DS_Store
+
+.env
+.env.*
+!.env.example
+.data/
+*.key
+*.pem
+*.crt
