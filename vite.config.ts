@@ -11,6 +11,7 @@ function attachLocalBackend(server: { middlewares: { use: (handler: any) => void
 }
 
 export default defineConfig({
+  base: '/labrika/',
   server: {
     fs: {
       deny: ['.env', '.env.*', '**/.data/**', '**/*.key', '**/.git/**', '*.{crt,pem}']
