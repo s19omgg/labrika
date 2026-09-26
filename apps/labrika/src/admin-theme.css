@@ -1,0 +1,59 @@
+/* Admin-only theme. The body scope also reaches account and plan portal dialogs. */
+:root[data-theme=dark] .design-v2.labrika-admin{--la-ink:var(--ink);--la-muted:var(--muted);--la-line:var(--line);--la-lime:var(--accent);background:var(--canvas);border-color:var(--line);color:var(--ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-sidebar,.la-topbar,.la-panel,.la-metric,.la-payment-summary,.la-toast){background:var(--surface);border-color:var(--line);color:var(--ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-admin-label,.la-sidebar nav>button,.la-sidebar nav>button>small,.la-sidebar-bottom>a,.la-topbar>div,.la-topbar>span,.la-page-heading>span,.la-metric>small,.la-metric>p,.la-metric>div,.la-panel-heading>button,.la-table th,.la-user-name small,.la-row-open,.la-plan-distribution>div:first-child,.la-distribution>p,.la-log-row p,.la-log-row time,.la-log-row time small,.la-search,.la-search button,.la-data-note,.la-empty,.la-empty p,.la-catalog-card>strong small,.la-catalog-card>p,.la-catalog-card dt,.la-catalog-features>span,.la-payment-summary>div>span,.la-payment-summary>p,.la-config-note>p,.la-config-note>div,.la-config-note>div strong,.la-detail-header>div>span,.la-account-facts>div,.la-detail-subscription>p,.la-detail-subscription>small,.la-management-note,.la-detail-footer>span,.la-toast button,.plan-editor-limits p){color:var(--muted)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-brand,.la-topbar strong,.la-page-heading h1,.la-metric>strong,.la-panel-heading h2,.la-table td,.la-user-name strong,.la-plan-distribution strong,.la-log-row strong,.la-search input,.la-empty h3,.la-catalog-card h2,.la-catalog-card>strong,.la-catalog-card dd,.la-payment-summary>div>strong,.la-config-note h2,.la-detail-header h2,.la-detail-columns h3,.la-account-facts strong,.la-detail-subscription>span,.plan-editor-highlight){color:var(--ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-topbar>div>svg:first-child,.la-panel-heading>button:hover,.la-row-open:hover){color:var(--ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-sidebar nav>button:hover{background:var(--surface-soft);color:var(--ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-sidebar nav>button.active{background:var(--accent-soft);color:var(--accent-ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-sidebar nav>button.active :where(svg,small){color:var(--accent-ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-sidebar-bottom>a,.la-table th,.la-table td,.la-log-row,.la-catalog-card dl,.la-config-note>div,.la-detail-header,.la-detail-footer,.plan-editor-footer){border-color:var(--line)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-metric>div>span,.la-avatar,.la-log-row>span,.la-config-note>span){background:var(--surface-soft);color:var(--muted)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-metric-lime>div>span,.la-payment-icon){background:var(--accent);color:#123422}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-avatar i{background:var(--muted);border-color:var(--surface)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-avatar i.online{background:var(--accent)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-table thead{background:var(--surface-soft)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-table tbody tr:has(.la-user-name):hover{background:var(--surface-raised)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-date{color:var(--muted)!important}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-status,.la-live){background:var(--surface-soft);color:var(--muted);border-color:var(--line)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-status-active,.provider-state-verified){background:var(--accent-soft);color:var(--accent-ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-plan-tag.has-plan{background:var(--accent-soft)!important;color:var(--accent-ink)!important}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-status-blocked,.provider-state-error){background:#462b30;color:#f4b8bf}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-status-expired{background:#40382a;color:#e3cd9c}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-plan-distribution>div:last-child{background:var(--surface-soft)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-plan-distribution i{background:var(--accent)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-catalog-card.featured{border-color:var(--accent-line)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-catalog-card>div:first-child>span{background:var(--accent-soft);color:var(--accent-ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-catalog-features svg{color:var(--accent-ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-catalog-card>.btn{background:var(--surface-soft)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-catalog-card>.btn:hover{background:var(--accent-soft)!important;color:var(--accent-ink)!important}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-payment-tabs>button,.la-payment-tabs>button>span){color:var(--muted)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-payment-tabs>button.active{background:var(--accent-soft);color:var(--accent-ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-payment-tabs>button.active>span{color:var(--accent-ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-subscription-management,.plan-editor-limits){background:var(--surface-soft);color:var(--ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-detail-subscription{background:var(--surface);border-color:var(--line)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-subscription-actions button{color:var(--ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-block,.la-subscription-actions button:last-child,.provider-settings .provider-error,.plan-editor-footer p[role=alert]){color:#f4b8bf}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(.la-unblock,.la-toast>svg){color:var(--accent-ink)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(input::placeholder,textarea::placeholder){color:var(--muted);opacity:1}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .plan-editor-limits input{background:var(--surface)!important}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .plan-editor-highlight input{accent-color:var(--accent)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 :where(button,a,input,textarea):focus-visible{outline-color:var(--accent);border-color:var(--accent-line)}
+:root[data-theme=dark] body:has(.labrika-admin) .design-v2 .la-toast{box-shadow:0 12px 36px #0004}
+
+/* Long headings and form controls retain their breathing room on phones. */
+.labrika-admin .la-config-fields .la-panel-heading,.labrika-admin .provider-card-heading{flex-wrap:wrap}
+.labrika-admin .provider-settings{margin-top:24px}
+.labrika-admin .provider-settings-toolbar{flex-wrap:wrap}
+.labrika-admin .smtp-settings form>.field{margin-bottom:20px}
+.labrika-admin .smtp-actions{margin-top:22px}
+@media(max-width:420px){
+ .labrika-admin .la-config-fields,.labrika-admin .la-config-note{padding:20px}
+ .labrika-admin .la-config-fields .la-panel-heading h2{min-width:0;font-size:15px}
+ .labrika-admin .smtp-settings h2{align-items:flex-start}
+ .labrika-admin .smtp-settings h2 svg{flex-shrink:0;margin-top:1px}
+ .labrika-admin .provider-card,.labrika-admin .provider-unlock{padding:20px}
+ .labrika-admin .provider-unlock{overflow-wrap:anywhere}
+ body:has(.labrika-admin) .plan-editor-main,body:has(.labrika-admin) .plan-editor-limits{grid-template-columns:minmax(0,1fr)}
+ .labrika-admin .la-detail-header>div{min-width:0}
+}

@@ -1,0 +1,14 @@
+import {useState} from 'react';
+import {Check,Pencil,Wallet} from 'lucide-react';
+import {Select} from './ui';
+import {useWorkspace} from './store';
+import {readWorkspace,saveWorkspace} from './runtime';
+import {useTeamAccess} from './team-data';
+interface Details{type:'individual'|'entrepreneur'|'company';name:string;phone:string;email:string;organization:string;address:string;savedAt?:string}
+export default function PaymentDetails(){
+ const {profile,notify}=useWorkspace(),{isOwner}=useTeamAccess();
+ const [draft,setDraft]=useState<Details>(()=>readWorkspace('payment-details-v1',{type:'individual',name:[profile.surname,profile.name].filter(Boolean).join(' '),phone:profile.phone||'',email:profile.email,organization:'',address:''}));
+ const [editing,setEditing]=useState(!draft.savedAt);const organization=draft.type!=='individual';
+ if(!isOwner)return null;
+ return <><div className="page-heading"><h1 className="page-title">Оплата</h1>{!editing&&<button className="btn btn-primary" onClick={()=>setEditing(true)}><Pencil size={15}/>Редактировать</button>}</div><form className="panel payment-details" onSubmit={e=>{e.preventDefault();try{const next={...draft,savedAt:new Date().toISOString()};saveWorkspace('payment-details-v1',next);setDraft(next);setEditing(false);notify('Сведения для оплаты сохранены');}catch{notify('Не удалось сохранить сведения');}}}><div className="payment-details-heading"><Wallet size={23}/><h2>Плательщик</h2></div><fieldset disabled={!editing}><label className="field">Тип плательщика<Select disabled={!editing} aria-label="Тип плательщика" value={draft.type} onChange={type=>setDraft({...draft,type:type as Details['type']})} options={[{value:'individual',label:'Физическое лицо'},{value:'entrepreneur',label:'ИП'},{value:'company',label:'Юридическое лицо'}]}/></label>{organization&&<label className="field">Наименование организации<input required value={draft.organization} onChange={e=>setDraft({...draft,organization:e.target.value})}/></label>}<label className="field">ФИО<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label><div className="payment-contact-fields"><label className="field">Телефон<input type="tel" required value={draft.phone} onChange={e=>setDraft({...draft,phone:e.target.value})}/></label><label className="field">Почта<input type="email" required value={draft.email} onChange={e=>setDraft({...draft,email:e.target.value})}/></label></div>{organization&&<label className="field">Адрес<textarea required rows={3} value={draft.address} onChange={e=>setDraft({...draft,address:e.target.value})}/></label>}</fieldset>{editing&&<div className="payment-details-actions">{draft.savedAt&&<button type="button" className="btn btn-ghost" onClick={()=>{setDraft(readWorkspace('payment-details-v1',draft));setEditing(false);}}>Отмена</button>}<button className="btn btn-primary" type="submit"><Check size={16}/>Сохранить</button></div>}</form></>;
+}

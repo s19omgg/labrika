@@ -1,0 +1,12 @@
+.design-v2 .profile-details{width:min(100%,740px);max-width:740px}
+.profile-details-heading{display:flex;align-items:center;gap:23px;padding-bottom:29px;margin-bottom:24px;border-bottom:1px solid var(--line,#ebedf0)}
+.profile-details-heading>div:nth-child(2){display:grid;gap:7px;min-width:0}
+.profile-details-heading strong{font-weight:550;font-size:18px;overflow-wrap:anywhere}
+.profile-details-heading span:not(.avatar){font-size:12px;color:var(--muted,#858b96)}
+.profile-picture{position:relative;flex-shrink:0}
+.design-v2 .profile-picture-edit{position:absolute;right:-6px;bottom:-3px;display:grid;place-items:center;width:31px;height:31px;background:var(--accent,#c6ff3a);color:#15221c;border:3px solid var(--surface,#fff);border-radius:50%;padding:0}
+.profile-picture-remove{margin-left:auto;flex-shrink:0}
+.profile-details-fields{display:grid;grid-template-columns:1fr 1fr;gap:7px 22px}
+.profile-details-fields input[readonly]{cursor:default;color:var(--muted,#858b96)}
+.profile-details>.btn{margin-top:13px}
+@media(max-width:600px){.profile-details-fields{grid-template-columns:1fr}.profile-details-heading{gap:17px}.profile-details-heading strong{font-size:16px}}

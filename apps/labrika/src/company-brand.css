@@ -1,0 +1,10 @@
+.design-v2.workspace-v3 .topbar .brand-with-company{display:flex;align-items:center;min-width:0;max-width:min(40%,440px);flex:0 1 auto;text-align:left}
+.design-v2 .brand-with-company .labrica-brand-company{min-width:0;max-width:100%;flex-shrink:1}
+.labrica-brand-text{display:flex;align-items:baseline;gap:14px;min-width:0}
+.workspace-company{display:flex;align-items:baseline;gap:12px;min-width:0;font-family:var(--font-sans);font-size:30px;font-weight:400;line-height:1;letter-spacing:-1px;color:var(--ink)}
+.workspace-company-cross{flex-shrink:0;color:var(--muted);font-size:22px;font-weight:400;align-self:center;line-height:1}
+.workspace-company-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:1100px){.design-v2.workspace-v3 .topbar .brand-with-company{max-width:38%}.labrica-brand-text{gap:10px}.workspace-company{gap:9px;font-size:25px}.brand-with-company .labrica-brand{gap:8px}.brand-with-company .labrica-wordmark{width:105px}}
+@media(max-width:760px){.design-v2.workspace-v3 .topbar .brand-with-company{width:100%;max-width:100%;min-width:0}.workspace-company{font-size:24px;gap:8px}.workspace-company-cross{font-size:18px}.labrica-brand-text{gap:9px}}
+@media(max-width:600px){.design-v2 .topbar .brand-with-company .labrica-wordmark{display:none}.labrica-brand-text{gap:0}.workspace-company{font-size:16px;letter-spacing:-.5px;align-items:center}.workspace-company-cross{font-size:16px}.brand-with-company .labrica-brand-company{gap:7px}}
+@media(max-width:360px){.design-v2 .topbar .brand-with-company .labrica-symbol{width:26px;height:26px}.brand-with-company .labrica-brand-company{gap:5px}.workspace-company{gap:4px;font-size:13px}}

@@ -1,0 +1,25 @@
+.design-v2 .range-trigger{font:inherit;font-size:12px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:9px;color:inherit}
+.design-v2 .range-trigger>svg:last-child{position:static;flex-shrink:0;opacity:.65}
+.design-v2 .range-popover{padding:17px;max-height:calc(100dvh - 24px);overflow-y:auto;border-radius:24px}
+.range-selection{display:grid;gap:5px;min-height:57px;padding:8px 8px 13px}
+.range-selection>span{font-size:10px;color:var(--muted,#868b96)}
+.range-selection>strong{font-size:12px;font-weight:500}
+/* A continuous band connects the selected dates; only its ends are rounded. */
+.design-v2.range-popover .range-grid{gap:4px 0}
+.design-v2.range-popover .range-grid button{border:0;border-radius:0;background:transparent;position:relative;height:36px;min-height:36px;box-shadow:none;outline:none;transform:none;transition:background-color 120ms ease,color 120ms ease}
+.design-v2.range-popover .range-grid button.in-range{background:var(--accent-soft,#edf5d9);color:var(--ink,#1a2020)}
+.design-v2.design-v2.range-popover .range-grid button.range-start,.design-v2.design-v2.range-popover .range-grid button.range-end{background:var(--accent,#c6ff3a);color:#13251c;font-weight:650}
+.design-v2.range-popover .range-grid button.range-start{border-radius:8px 0 0 8px}
+.design-v2.range-popover .range-grid button.range-end{border-radius:0 8px 8px 0}
+.design-v2.range-popover .range-grid button.range-start.range-end{border-radius:8px}
+.design-v2.range-popover .range-grid button:disabled{opacity:.25;cursor:default}
+.design-v2.range-popover .range-grid button:not(:disabled):not(.in-range):hover{background:var(--surface-soft,#f1f3f5);border-radius:8px}
+.design-v2.range-popover .range-grid button:focus-visible{outline:2px solid currentColor;outline-offset:-3px}
+.range-actions{display:flex;justify-content:space-between;align-items:center;padding:15px 1px 0;gap:20px}
+.range-actions .btn{font-size:11px;min-height:36px;padding:9px 17px}
+@media(max-width:680px){.design-v2 .range-trigger{font-size:10px;gap:6px}.design-v2 .range-trigger>svg{width:13px}.design-v2 .range-popover{padding:14px}}
+
+
+.design-v2.floating-surface.range-popover{background:var(--surface-raised,#fff);color:var(--ink,#1a2020);border:1px solid var(--line,#e6e9ed)}
+:root[data-theme=dark] .design-v2.range-popover .range-grid button.range-start,:root[data-theme=dark] .design-v2.range-popover .range-grid button.range-end{color:#13251c}
+:root[data-theme=dark] .design-v2.range-popover .date-popover-heading,:root[data-theme=dark] .design-v2.range-popover .range-selection{color:var(--ink)}

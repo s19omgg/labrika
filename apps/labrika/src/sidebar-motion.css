@@ -1,0 +1,35 @@
+/* The rail occupies its complete grid cell. Only its surface and upper controls move. */
+.design-v2.workspace-v6 .sidebar.scroll-rail {
+  margin-top: 12px;
+  background: transparent;
+  pointer-events: none;
+  isolation: isolate;
+}
+.design-v2.workspace-v6 .rail-surface {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  pointer-events: none;
+  z-index: -1;
+  will-change: clip-path;
+}
+.design-v2.workspace-v6 .scroll-rail .rail-navigation,
+.design-v2.workspace-v6 .scroll-rail .rail-bottom {
+  position: relative;
+  pointer-events: auto;
+  flex-shrink: 0;
+}
+.design-v2.workspace-v6 .scroll-rail .rail-navigation {
+  will-change: transform;
+  transition: none;
+}
+.design-v2.workspace-v6 .sidebar.scroll-rail.mobile-open {
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Match physical scrolling without any independent animation or delayed settling. */
+  .design-v2.workspace-v6 .scroll-rail .rail-navigation,
+  .design-v2.workspace-v6 .rail-surface { transition: none; animation: none; }
+}
+
+html:has(.workspace-v6),body:has(.workspace-v6){overscroll-behavior:none}.design-v2.workspace-v6 .main-shell{overscroll-behavior:none}.design-v2.workspace-v6 .rail-surface{transform-origin:left center;will-change:clip-path,transform}.design-v2.workspace-v6 .rail-label{overflow-wrap:normal}

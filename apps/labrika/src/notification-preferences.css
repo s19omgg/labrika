@@ -1,0 +1,11 @@
+.notification-preferences{padding:27px}
+.notification-preferences h2{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:550;margin:0 0 21px}
+.notification-preference-row{display:flex;gap:20px;position:relative;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line,#eeeff2);font-size:13px;cursor:pointer}
+.notification-preference-row:last-of-type{border:0}
+.notification-preference-row input{position:absolute;right:0;width:40px;height:24px;opacity:0;cursor:pointer;margin:0}
+.notification-switch{display:block;position:relative;flex-shrink:0;width:40px;height:24px;background:var(--line,#e7e8ec);border-radius:20px;transition:background .16s ease;pointer-events:none}
+.notification-switch:after{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #00000012;transition:transform .16s ease}
+.notification-preference-row input:checked+.notification-switch{background:var(--accent,#c6ff3a)}
+.notification-preference-row input:checked+.notification-switch:after{transform:translateX(16px)}
+.notification-preference-row input:focus-visible+.notification-switch{outline:2px solid var(--accent,#c6ff3a);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.notification-switch,.notification-switch:after{transition:none}}

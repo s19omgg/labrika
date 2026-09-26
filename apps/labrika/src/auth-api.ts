@@ -1,0 +1,1 @@
+export async function authRequest<T>(path:string,body:unknown):Promise<T>{const response=await fetch(`/api/auth/email/${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw new Error(result.error||'Не удалось подтвердить почту');return result;}
