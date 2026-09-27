@@ -3,7 +3,7 @@ import {chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSyn
 import {resolve, join} from 'node:path';
 import {lookup} from 'node:dns/promises';
 import {isIP} from 'node:net';
-import {ProxyAgent} from 'undici';
+import {ProxyAgent, fetch as undiciFetch} from 'undici';
 
 const PLATFORMS = ['telegram', 'vk', 'instagram', 'threads', 'youtube', 'max', 'tiktok'];
 const NAMES = {telegram:'Telegram', vk:'VK', instagram:'Instagram', threads:'Threads', youtube:'YouTube', max:'МАКС', tiktok:'TikTok'};
@@ -157,7 +157,15 @@ export function createSocialHandler({
   const publicPublication=r=>({postId:r.postId,platform:r.platform,requestId:r.requestId,status:r.status,error:r.error,...r.result,...(r.publishId?{publishId:r.publishId}:{}),...(r.snapshot?{snapshot:r.snapshot}:{}),createdAt:r.createdAt});
   async function request(platform, url, options={}, finalSend=false) {
     let response, result;
-    try { response=await fetchImpl(url,{...options,redirect:'error',signal:AbortSignal.timeout(finalSend?120000:30000)}); }
+    try {
+  const transport=options.dispatcher ? undiciFetch : fetchImpl;
+
+  response=await transport(url,{
+    ...options,
+    redirect:'error',
+    signal:AbortSignal.timeout(finalSend?120000:30000)
+  });
+}
     catch { throw new SocialError(finalSend?'Ответ площадки не получен. Проверьте, появилась ли публикация, прежде чем отправлять её снова.':`Не удалось связаться с ${NAMES[platform]}. Попробуйте позже.`,502,finalSend?'PUBLISH_UNKNOWN':'NETWORK_ERROR',finalSend); }
     try { result=await response.json(); } catch { throw new SocialError('Площадка вернула некорректный ответ. Проверьте результат в социальной сети.',502,finalSend?'PUBLISH_UNKNOWN':'PROVIDER_RESPONSE',finalSend); }
     if(!response.ok || (result.error && !(platform==='tiktok'&&result.error.code==='ok')) || result.ok===false || result.success===false || platform==='max'&&result.code) {
