@@ -1,3 +1,4 @@
+import {verificationEmail} from './email-template.mjs';
 import {createCipheriv,createDecipheriv,createHash,randomBytes,randomInt,timingSafeEqual} from 'node:crypto';
 import {mkdirSync,existsSync,readFileSync,writeFileSync,renameSync} from 'node:fs';
 import {join} from 'node:path';
@@ -10,7 +11,8 @@ export function createAuthHandler({directory='.data',issuerKey=process.env.APPRO
  mkdirSync(directory,{recursive:true,mode:0o700});const keyPath=join(directory,'approval-issuer.key');
  if(!issuerKey){if(!existsSync(keyPath))writeFileSync(keyPath,randomBytes(32).toString('hex'),{mode:0o600});issuerKey=readFileSync(keyPath,'utf8').trim();}
  const encryptionKey=digest(`smtp:${issuerKey}`),file=join(directory,'smtp.json');
- const read=()=>{if(!existsSync(file))return null;const value=JSON.parse(readFileSync(file,'utf8')),decipher=createDecipheriv('aes-256-gcm',encryptionKey,Buffer.from(value.iv,'base64'));decipher.setAuthTag(Buffer.from(value.tag,'base64'));return JSON.parse(Buffer.concat([decipher.update(Buffer.from(value.data,'base64')),decipher.final()]).toString());};
+const envConfig=()=>process.env.POSTBOX_SMTP_HOST&&process.env.POSTBOX_SMTP_USER&&process.env.POSTBOX_SMTP_PASSWORD&&process.env.POSTBOX_FROM_EMAIL?{host:process.env.POSTBOX_SMTP_HOST,port:Number(process.env.POSTBOX_SMTP_PORT||587),secure:Number(process.env.POSTBOX_SMTP_PORT||587)===465,user:process.env.POSTBOX_SMTP_USER,password:process.env.POSTBOX_SMTP_PASSWORD,from:process.env.POSTBOX_FROM_EMAIL,fromName:process.env.POSTBOX_FROM_NAME||'LABRICA'}:null;
+const read=()=>{const env=envConfig();if(env)return env;if(!existsSync(file))return null;const value=JSON.parse(readFileSync(file,'utf8')),decipher=createDecipheriv('aes-256-gcm',encryptionKey,Buffer.from(value.iv,'base64'));decipher.setAuthTag(Buffer.from(value.tag,'base64'));return JSON.parse(Buffer.concat([decipher.update(Buffer.from(value.data,'base64')),decipher.final()]).toString());};
  const save=config=>{const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',encryptionKey,iv),data=Buffer.concat([cipher.update(JSON.stringify(config)),cipher.final()]);writeFileSync(file+'.tmp',JSON.stringify({iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')}),{mode:0o600});renameSync(file+'.tmp',file);};
  const view=config=>config?{host:config.host,port:config.port,secure:config.secure,user:config.user,from:config.from,fromName:config.fromName,configured:!!config.password}:{host:'',port:465,secure:true,user:'',from:'',fromName:'LABRICA',configured:false};
  const challenges=new Map(),proofs=new Map(),limits=new Map();
@@ -39,7 +41,19 @@ export function createAuthHandler({directory='.data',issuerKey=process.env.APPRO
     const config=read();if(!config?.password)throw fail(503,'Отправка писем ещё не настроена. Попробуйте зарегистрироваться позже.');
     takeLimit(`cooldown:${email}`,1,60000);takeLimit(`email:${email}`,5,3600000);takeLimit(`ip:${ip}`,30,3600000);
     const code=String(randomInt(0,1000000)).padStart(6,'0'),id=randomBytes(24).toString('base64url');
-    try{const receipt=await transport(config).sendMail({from:{name:config.fromName,address:config.from},to:email,subject:'Код подтверждения LABRICA',text:`Ваш код подтверждения: ${code}\n\nКод действует 10 минут. Если вы не регистрировались в LABRICA, проигнорируйте это письмо.`});if(!receipt.accepted?.some(address=>String(address).toLowerCase()===email))throw Error('rejected');}catch{throw fail(502,'Не удалось отправить письмо. Попробуйте через минуту.');}
+    try{
+     const emailContent=verificationEmail(code);
+     const receipt=await transport(config).sendMail({
+      from:{name:config.fromName,address:config.from},
+      to:email,
+      subject:emailContent.subject,
+      text:emailContent.text,
+      html:emailContent.html
+     });
+     if(!receipt.accepted?.some(address=>String(address).toLowerCase()===email))throw Error('rejected');
+    }catch{
+     throw fail(502,'Не удалось отправить письмо. Попробуйте через минуту.');
+    }
     for(const [key,value] of challenges)if(value.email===email)challenges.delete(key);
     challenges.set(id,{email,hash:digest(`${id}:${code}`).toString('hex'),attempts:0,expiresAt:now()+600000});return reply(200,{challengeId:id,expiresIn:600,retryAfter:60});
    }

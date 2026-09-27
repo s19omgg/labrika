@@ -10,7 +10,7 @@ const HF='https://api.higgsfield.ai';
 const DEFAULTS={textModel:'gpt-6-astra',imageModel:'gpt-image-2.5-flare',videoModel:'bytedance/seedance-2.0/image-to-video'};
 const VIDEO_MODELS=['bytedance/seedance-2.0/image-to-video','wan/v2.7/image-to-video'];
 const IMAGE=/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
-const EDITIONS=['labrika'];
+const EDITIONS=['labrika','ygroup'];
 class ApiError extends Error {constructor(message,status=400){super(message);this.status=status;}}
 const fail=(message,status)=>{throw new ApiError(message,status);};
 const same=(a,b)=>{const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y);};
@@ -33,7 +33,7 @@ export function createProviderService({directory='.data',issuerKey=process.env.A
   if(!existsSync(keyFile))writeFileSync(keyFile,randomBytes(32),{flag:'wx',mode:0o600});
   encryptionKey=readFileSync(keyFile);if(encryptionKey.length!==32)throw new Error('Invalid AI storage key');
   if(!issuerKey){const issuerFile=join(directory,'approval-issuer.key');if(!existsSync(issuerFile))writeFileSync(issuerFile,randomBytes(32).toString('hex'),{flag:'wx',mode:0o600});issuerKey=readFileSync(issuerFile,'utf8').trim();}
-  state={labrika:{}};
+  state={labrika:{},ygroup:{}};
   if(existsSync(file)){const record=JSON.parse(readFileSync(file,'utf8')),decipher=createDecipheriv('aes-256-gcm',encryptionKey,Buffer.from(record.iv,'base64'));decipher.setAuthTag(Buffer.from(record.tag,'base64'));state=JSON.parse(Buffer.concat([decipher.update(Buffer.from(record.data,'base64')),decipher.final()]).toString());}
   initialized=true;
  }
@@ -153,7 +153,7 @@ export function createProviderService({directory='.data',issuerKey=process.env.A
   try{
    if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)fail('Запрос с другого сайта отклонён',403);
    initialize();
-   const match=pathname.match(/^\/api\/ai\/providers\/(labrika)(?:\/(check|openai|higgsfield))?$/);
+   const match=pathname.match(/^\/api\/ai\/providers\/(labrika|ygroup)(?:\/(check|openai|higgsfield))?$/);
    if(match){
     if(!issuerKey||!same(req.headers['x-approval-key']||'',issuerKey))fail('Требуется ключ администратора сервера',401);
     const [,edition,action]=match;

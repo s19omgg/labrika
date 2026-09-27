@@ -424,7 +424,7 @@ export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch
       init();
       if(url.pathname==='/api/social/workspaces' && req.method==='POST') {
         const input=await readBody(req);
-        if(input.edition!=='labrika' || input.workspaceId || input.workspaceKey) throw new SocialError('Пространство создаётся автоматически');
+        if(!['labrika','ygroup'].includes(input.edition) || input.workspaceId || input.workspaceKey) throw new SocialError('Пространство создаётся автоматически');
         const ip=req.socket?.remoteAddress||'local', previous=signupRates.get(ip);
         const rate=previous&&Date.now()-previous.started<60000?previous:{started:Date.now(),count:0};
         if(++rate.count>30 || Object.keys(state.workspaces).length>=500) throw new SocialError('Слишком много запросов. Повторите позже.',429);

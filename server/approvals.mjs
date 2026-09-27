@@ -24,7 +24,7 @@ export function createApprovalHandler({directory='.data', issuerKey, now=()=>Dat
       if(!parts.length&&req.method==='POST'){
         if(!owner())return reply(401,{error:'Issuer authentication required'});
         const input=await body(req);
-        if(input.edition!=='labrika'||typeof input.workspaceId!=='string'||!input.workspaceId.trim()||!Array.isArray(input.posts)||input.posts.length<1||input.posts.length>30)return reply(400,{error:'Edition, workspace and 1–30 posts required'});
+        if(!['ygroup','labrika'].includes(input.edition)||typeof input.workspaceId!=='string'||!input.workspaceId.trim()||!Array.isArray(input.posts)||input.posts.length<1||input.posts.length>30)return reply(400,{error:'Edition, workspace and 1–30 posts required'});
         const posts=input.posts.map(post=>{if(typeof post.id!=='string'||typeof post.title!=='string'||typeof post.body!=='string'||!post.body.trim()||post.body.length>20000)throw Object.assign(new Error('Invalid post'),{status:400});return {id:post.id,title:post.title.slice(0,200),body:post.body,platforms:(Array.isArray(post.platforms)?post.platforms:[]).filter(p=>['vk','telegram','instagram','threads','dzen','youtube'].includes(p))};});
         const token=randomBytes(32).toString('base64url');const id=randomBytes(16).toString('hex');
         const duration=Math.min(30*86400000,Math.max(60000,Number(input.expiresInMs)||7*86400000));

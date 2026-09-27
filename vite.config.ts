@@ -1,15 +1,33 @@
-import {createAuthHandler} from './server/auth-service.mjs';
-const auth=createAuthHandler();
-import { defineConfig, loadEnv } from 'vite';
-import { landingSeo } from './server/landing-seo.mjs';
+import 'dotenv/config';
+import {defineConfig,loadEnv} from 'vite';
 import react from '@vitejs/plugin-react';
-import { createSocialHandler } from './server/social-service.mjs';
+import {createAuthHandler} from './server/auth-service.mjs';
+import {landingSeo} from './server/landing-seo.mjs';
+import {createSocialHandler} from './server/social-service.mjs';
+import {createProviderService} from './server/provider-service.mjs';
+import {createCreativeHandler} from './server/creative-service.mjs';
+import {createApprovalHandler} from './server/approvals.mjs';
+import {editionRoutes} from './server/routing.mjs';
+
+const auth=createAuthHandler();
 const social=createSocialHandler();
-import { createProviderService } from './server/provider-service.mjs';
 const providers=createProviderService();
-import { createCreativeHandler } from './server/creative-service.mjs';
-const creative=createCreativeHandler({resolveAdapter:req=>providers.creativeAdapter(String(req.headers['x-product-edition']||'labrika')),resolveCapabilities:req=>providers.capabilities(String(req.headers['x-product-edition']||'labrika'))});
-import { createApprovalHandler } from './server/approvals.mjs';
-import { editionRoutes } from './server/routing.mjs';
+const creative=createCreativeHandler({
+  resolveAdapter:req=>providers.creativeAdapter(String(req.headers['x-product-edition']||'labrika')),
+  resolveCapabilities:req=>providers.capabilities(String(req.headers['x-product-edition']||'labrika')),
+});
 const approval=createApprovalHandler({issuerKey:process.env.APPROVAL_ISSUER_KEY});
-export default defineConfig(({mode})=>{const env=loadEnv(mode,process.cwd(),'PUBLIC_');return {server:{fs:{deny:['.env','.env.*','**/.data/**','**/*.key','**/.git/**','*.{crt,pem}']}},plugins:[react(),landingSeo(env.PUBLIC_SITE_URL),{name:'local-product-routes',configureServer(server){server.middlewares.use(auth);server.middlewares.use(providers.handler);server.middlewares.use(social);server.middlewares.use(creative);server.middlewares.use(approval);server.middlewares.use(editionRoutes);},configurePreviewServer(server){server.middlewares.use(auth);server.middlewares.use(providers.handler);server.middlewares.use(social);server.middlewares.use(creative);server.middlewares.use(approval);server.middlewares.use(editionRoutes);}}],build:{rollupOptions:{input:{landing:'index.html',labrika:'labrika/index.html',admin:'labrika/admin/index.html'}}}};});
+const api={
+  name:'labrika-local-api',
+  configureServer(server){server.middlewares.use(auth);server.middlewares.use(providers.handler);server.middlewares.use(social);server.middlewares.use(creative);server.middlewares.use(approval);server.middlewares.use(editionRoutes);},
+  configurePreviewServer(server){server.middlewares.use(auth);server.middlewares.use(providers.handler);server.middlewares.use(social);server.middlewares.use(creative);server.middlewares.use(approval);server.middlewares.use(editionRoutes);},
+};
+
+export default defineConfig(({mode})=>{
+  const env=loadEnv(mode,process.cwd(),'PUBLIC_');
+  return {
+    server:{fs:{deny:['.env','.env.*','**/.data/**','**/*.key','**/.git/**','*.{crt,pem}']}},
+    plugins:[react(),landingSeo(env.PUBLIC_SITE_URL),api],
+    build:{rollupOptions:{input:{landing:'index.html',labrika:'labrika/index.html',admin:'labrika/admin/index.html'}}},
+  };
+});

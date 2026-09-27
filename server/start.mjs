@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import {createAuthHandler} from './auth-service.mjs';
 const auth=createAuthHandler();
 import {createServer} from 'node:http';
