@@ -14,8 +14,51 @@ interface Credentials {workspaceId:string;workspaceKey:string}
 const pending=new Map<string,Promise<Credentials>>();
 async function decode<T>(response:Response):Promise<T>{let value;try{value=await response.json();}catch{throw new Error('Локальный сервер недоступен. Обновите страницу.');}if(!response.ok)throw Object.assign(new Error(value.error||'Не удалось выполнить запрос'),{code:value.code,status:response.status});return value;}
 async function credentials():Promise<Credentials>{const saved=readWorkspace<Credentials|null>('social-server-v1',null);if(saved?.workspaceId&&saved.workspaceKey)return saved;const scope=workspaceKey('social-server-v1');let current=pending.get(scope);if(!current){current=fetch('/api/social/workspaces',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({edition})}).then(decode<Credentials>).then(value=>{localStorage.setItem(scope,JSON.stringify(value));return value;}).finally(()=>pending.delete(scope));pending.set(scope,current);}return current;}
-export async function socialRequest<T>(path:string,method='GET',body?:unknown):Promise<T>{if((path.startsWith('/connections')&&method!=='GET'&&!path.endsWith('creator-info'))&&!getTeamAccess().can('manageSocial'))throw new Error('Нет прав на управление подключениями');if(path==='/publish'&&!getTeamAccess().can('schedulePosts'))throw new Error('Нет прав на публикацию');const owner=await credentials();const response=await fetch(`/api/social${path}`,{method,headers:{'Content-Type':'application/json','X-Social-Workspace':owner.workspaceId,'X-Social-Key':owner.workspaceKey},...(body===undefined?{}:{body:JSON.stringify(body)})});return decode<T>(response);}
+export async function socialRequest<T>(
+  path:string,
+  method='GET',
+  body?:unknown
+):Promise<T>{
+  const managesConnection=
+    (
+      path.startsWith('/connections') &&
+      method!=='GET' &&
+      !path.endsWith('creator-info')
+    ) ||
+    (
+      path==='/telegram/connect' &&
+      method==='POST'
+    );
+
+  if(managesConnection&&!getTeamAccess().can('manageSocial')){
+    throw new Error('Нет прав на управление подключениями');
+  }
+
+  if(path==='/publish'&&!getTeamAccess().can('schedulePosts')){
+    throw new Error('Нет прав на публикацию');
+  }
+
+  const owner=await credentials();
+
+  const response=await fetch(`/api/social${path}`,{
+    method,
+    headers:{
+      'Content-Type':'application/json',
+      'X-Social-Workspace':owner.workspaceId,
+      'X-Social-Key':owner.workspaceKey
+    },
+    ...(body===undefined?{}:{body:JSON.stringify(body)})
+  });
+
+  return decode<T>(response);
+}
 export async function listConnections(){return(await socialRequest<{connections:SocialConnection[]}>('/connections')).connections;}
+export function createTelegramConnectLink(){
+  return socialRequest<{
+    url:string;
+    expiresAt:string;
+  }>('/telegram/connect','POST',{});
+}
 export function connectionsChanged(){window.dispatchEvent(new Event('social-connections-change'));}
 export function saveConnection(platform:Platform,config:SocialConfig){return socialRequest<{connection:SocialConnection}>('/connections','POST',{platform,config});}
 export function checkConnection(platform:Platform){return socialRequest<{connection:SocialConnection}>(`/connections/${platform}/check`,'POST',{});}

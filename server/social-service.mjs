@@ -103,7 +103,7 @@ export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch
     chmodSync(keyFile,0o600); encryptionKey=readFileSync(keyFile);
     if(encryptionKey.length!==32) throw new Error('Invalid social encryption key');
     const file=join(directory,'social-connections.json');
-    if(!existsSync(file)) state={version:1,workspaces:{}};
+    if(!existsSync(file)) state={version:1,workspaces:{},telegramPending:{}};
     else {
       const record=JSON.parse(readFileSync(file,'utf8'));
       const decipher=createDecipheriv('aes-256-gcm',encryptionKey,Buffer.from(record.iv,'base64'));
@@ -111,12 +111,28 @@ export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch
       const decoded=JSON.parse(Buffer.concat([decipher.update(Buffer.from(record.data,'base64')),decipher.final()]).toString());
       if(decoded.version!==1 || !decoded.workspaces) throw new Error('Invalid social storage');
       state=decoded;
+      if(!existsSync(file)) state={version:1,workspaces:{},telegramPending:{}};
       // An interrupted final send may have succeeded remotely. Never retry it automatically.
       let changed=false;
       for(const workspace of Object.values(state.workspaces)) for(const record of Object.values(workspace.publications)) if(record.status==='pending') {record.status=record.platform==='tiktok'&&record.publishId?'processing':'unknown';record.error='Отправка была прервана. Проверьте публикацию в социальной сети.';changed=true;}
       if(changed) persist();
     }
   }
+  function cleanupTelegramPending() {
+  if(!state.telegramPending) state.telegramPending={};
+
+  const time=Date.now();
+  let changed=false;
+
+  for(const [key,value] of Object.entries(state.telegramPending)) {
+    if(!value?.expiresAt || Date.parse(value.expiresAt)<=time) {
+      delete state.telegramPending[key];
+      changed=true;
+    }
+  }
+
+  if(changed) persist();
+}
   function workspaceFor(req) {
     const id=String(req.headers['x-social-workspace']||''), key=String(req.headers['x-social-key']||'');
     const workspace=state.workspaces[id];
@@ -140,7 +156,21 @@ export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch
   }
   const bearer=config=>({Authorization:`Bearer ${config.token}`});
   const form=(value)=>new URLSearchParams(Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).map(([k,v])=>[k,String(v)])));
-  const telegram=(config,method,params,finalSend=false)=>request('telegram',`https://api.telegram.org/bot${config.token}/${method}`,{method:'POST',body:params instanceof FormData?params:form(params)},finalSend).then(r=>r.result);
+  const telegram=(config={},method,params,finalSend=false)=>{
+  const token=config.token||process.env.TELEGRAM_BOT_TOKEN;
+  if(!/^\d{5,20}:[A-Za-z0-9_-]{20,100}$/.test(token||'')) {
+    throw new SocialError('Telegram-бот LABRICA не настроен на сервере',500,'TELEGRAM_NOT_CONFIGURED');
+  }
+  return request(
+    'telegram',
+    `https://api.telegram.org/bot${token}/${method}`,
+    {
+      method:'POST',
+      body:params instanceof FormData?params:form(params)
+    },
+    finalSend
+  ).then(r=>r.result);
+};
   const vk=(config,method,params={},finalSend=false)=>request('vk',`https://api.vk.com/method/${method}`,{method:'POST',body:form({...params,access_token:config.token,v:'5.199'})},finalSend).then(r=>r.response);
   const graphBase=platform=>platform==='instagram'?`https://graph.instagram.com/${process.env.INSTAGRAM_API_VERSION||'v23.0'}`:'https://graph.threads.net/v1.0';
   const graph=(platform,config,path,params={},method='GET',finalSend=false)=>request(platform,`${graphBase(platform)}/${path}${method==='GET'?`?${form(params)}`:''}`,{method,headers:bearer(config),...(method==='GET'?{}:{body:form(params)})},finalSend);
@@ -422,6 +452,159 @@ export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch
     try {
       if(req.headers.origin && new URL(req.headers.origin).host!==req.headers.host) throw new SocialError('Запрос с другого сайта отклонён',403,'CROSS_ORIGIN');
       init();
+      if(url.pathname==='/api/social/telegram/webhook' && req.method==='POST') {
+  const expected=String(process.env.TELEGRAM_WEBHOOK_SECRET||'');
+  const received=String(req.headers['x-telegram-bot-api-secret-token']||'');
+
+  if(!expected || received!==expected) {
+    return send(res,403,{error:'Forbidden'});
+  }
+
+  cleanupTelegramPending();
+
+  const update=await readBody(req);
+  const message=update.message;
+
+  if(!message) return send(res,200,{ok:true});
+
+  const chatId=message.chat?.id;
+  const userId=message.from?.id;
+
+  // Пользователь открыл персональную ссылку LABRICA.
+  const startMatch=typeof message.text==='string'
+    ? /^\/start(?:@\w+)?\s+([A-Za-z0-9_-]{20,64})$/.exec(message.text.trim())
+    : null;
+
+  if(startMatch && chatId && userId) {
+    const key=digest(startMatch[1]);
+    const pending=state.telegramPending[key];
+
+    if(!pending || Date.parse(pending.expiresAt)<=Date.now()) {
+      delete state.telegramPending[key];
+      persist();
+
+      await telegram({},'sendMessage',{
+        chat_id:chatId,
+        text:'Ссылка подключения устарела. Вернитесь в LABRICA и нажмите «Подключить» ещё раз.'
+      });
+
+      return send(res,200,{ok:true});
+    }
+
+    const requestId=randomBytes(4).readUInt32BE(0)&0x7fffffff;
+
+    pending.telegramUserId=String(userId);
+    pending.telegramChatId=String(chatId);
+    pending.requestId=requestId;
+    pending.status='awaiting_channel';
+    persist();
+
+    const rights={
+      is_anonymous:false,
+      can_manage_chat:true,
+      can_delete_messages:false,
+      can_manage_video_chats:false,
+      can_restrict_members:false,
+      can_promote_members:false,
+      can_change_info:false,
+      can_invite_users:false,
+      can_post_stories:false,
+      can_edit_stories:false,
+      can_delete_stories:false,
+      can_post_messages:true,
+      can_edit_messages:false
+    };
+
+    await telegram({},'sendMessage',{
+      chat_id:chatId,
+      text:'Выберите Telegram-канал, который хотите подключить к LABRICA.',
+      reply_markup:JSON.stringify({
+        keyboard:[[
+          {
+            text:'Выбрать канал',
+            request_chat:{
+              request_id:requestId,
+              chat_is_channel:true,
+              user_administrator_rights:rights,
+              bot_administrator_rights:rights,
+              request_title:true,
+              request_username:true
+            }
+          }
+        ]],
+        resize_keyboard:true,
+        one_time_keyboard:true
+      })
+    });
+
+    return send(res,200,{ok:true});
+  }
+
+  // Пользователь выбрал канал.
+  if(message.chat_shared && chatId && userId) {
+    const shared=message.chat_shared;
+
+    const entry=Object.entries(state.telegramPending).find(([,pending])=>
+      pending.telegramUserId===String(userId) &&
+      pending.telegramChatId===String(chatId) &&
+      pending.requestId===shared.request_id &&
+      Date.parse(pending.expiresAt)>Date.now()
+    );
+
+    if(!entry) {
+      await telegram({},'sendMessage',{
+        chat_id:chatId,
+        text:'Не удалось найти подключение LABRICA. Запустите подключение ещё раз.',
+        reply_markup:JSON.stringify({remove_keyboard:true})
+      });
+
+      return send(res,200,{ok:true});
+    }
+
+    const [pendingKey,pending]=entry;
+    const workspace=state.workspaces[pending.workspaceId];
+
+    if(!workspace) {
+      delete state.telegramPending[pendingKey];
+      persist();
+      return send(res,200,{ok:true});
+    }
+
+    const config={account:String(shared.chat_id)};
+
+    try {
+      const connection=await validateConnection('telegram',config);
+
+      connection.config={account:String(shared.chat_id)};
+      connection.connectedAt=workspace.connections.telegram?.connectedAt||now();
+
+      workspace.connections.telegram=connection;
+      delete state.telegramPending[pendingKey];
+      persist();
+
+      await telegram({},'sendMessage',{
+  chat_id:chatId,
+  text:
+    `✅ Канал «${connection.accountName}» подключён к LABRICA.\n\n` +
+    `Теперь LABRICA может публиковать контент в этот канал.\n` +
+    `Вернитесь в LABRICA — подключение появится автоматически.`,
+  reply_markup:JSON.stringify({
+    remove_keyboard:true
+  })
+});
+    } catch(error) {
+      await telegram({},'sendMessage',{
+        chat_id:chatId,
+        text:'Не удалось проверить права бота в канале. Проверьте, что LABRICA добавлен администратором с правом публикации.',
+        reply_markup:JSON.stringify({remove_keyboard:true})
+      });
+    }
+
+    return send(res,200,{ok:true});
+  }
+
+  return send(res,200,{ok:true});
+}
       if(url.pathname==='/api/social/workspaces' && req.method==='POST') {
         const input=await readBody(req);
         if(!['labrika','ygroup'].includes(input.edition) || input.workspaceId || input.workspaceKey) throw new SocialError('Пространство создаётся автоматически');
@@ -434,6 +617,44 @@ export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch
         return send(res,201,{workspaceId,workspaceKey});
       }
       const workspace=workspaceFor(req);
+      if(url.pathname==='/api/social/telegram/connect' && req.method==='POST') {
+  cleanupTelegramPending();
+
+  const botUsername=String(process.env.TELEGRAM_BOT_USERNAME||'').replace(/^@/,'');
+  const botToken=String(process.env.TELEGRAM_BOT_TOKEN||'');
+
+  if(!/^[A-Za-z0-9_]{5,32}$/.test(botUsername)) {
+    throw new SocialError(
+      'Username Telegram-бота LABRICA не настроен',
+      500,
+      'TELEGRAM_NOT_CONFIGURED'
+    );
+  }
+
+  if(!/^\d{5,20}:[A-Za-z0-9_-]{20,100}$/.test(botToken)) {
+    throw new SocialError(
+      'Токен Telegram-бота LABRICA не настроен',
+      500,
+      'TELEGRAM_NOT_CONFIGURED'
+    );
+  }
+
+  const token=randomBytes(32).toString('base64url');
+  const expiresAt=new Date(Date.now()+15*60*1000).toISOString();
+
+  state.telegramPending[digest(token)]={
+    workspaceId:workspace.id,
+    createdAt:now(),
+    expiresAt
+  };
+
+  persist();
+
+  return send(res,200,{
+    url:`https://t.me/${botUsername}?start=${token}`,
+    expiresAt
+  });
+}
       if(url.pathname==='/api/social/connections' && req.method==='GET') return send(res,200,{connections:Object.values(workspace.connections).map(publicConnection)});
       if(url.pathname==='/api/social/publications' && req.method==='GET') return send(res,200,{publications:Object.values(workspace.publications).filter(r=>!url.searchParams.has('postId')||r.postId===url.searchParams.get('postId')).map(publicPublication)});
       if(url.pathname==='/api/social/connections/tiktok/creator-info'&&req.method==='POST') {
@@ -459,7 +680,18 @@ export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch
         try {await pending;return send(res,200,{publication:publicPublication(record)});} finally {statusChecks.delete(key);}
       }
       if(url.pathname==='/api/social/connections' && req.method==='POST') {
-        const input=await readBody(req), platform=input.platform;activeConfig=configFor(platform,input.config);
+  const input=await readBody(req), platform=input.platform;
+
+  if(platform==='telegram') {
+    throw new SocialError(
+      'Telegram подключается через бота LABRICA',
+      422,
+      'TELEGRAM_BOT_FLOW_REQUIRED'
+    );
+  }
+
+  activeConfig=configFor(platform,input.config);
+        
         const lock=`${workspace.id}:${platform}`;
         if(connectionLocks.has(lock)) throw new SocialError('Подключение уже обновляется',409);
         connectionLocks.add(lock);
