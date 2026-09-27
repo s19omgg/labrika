@@ -3,6 +3,7 @@ import {chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSyn
 import {resolve, join} from 'node:path';
 import {lookup} from 'node:dns/promises';
 import {isIP} from 'node:net';
+import {ProxyAgent} from 'undici';
 
 const PLATFORMS = ['telegram', 'vk', 'instagram', 'threads', 'youtube', 'max', 'tiktok'];
 const NAMES = {telegram:'Telegram', vk:'VK', instagram:'Instagram', threads:'Threads', youtube:'YouTube', max:'МАКС', tiktok:'TikTok'};
@@ -81,7 +82,20 @@ function providerFailure(platform, result, httpStatus) {
 }
 
 /** Local capability-authenticated connections. No credentials are ever returned to the browser. */
-export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch, resolver=lookup, pollIntervalMs=1500, maxPolls=60, statusMinIntervalMs=3000}={}) {
+export function createSocialHandler({
+  directory=resolve('.data'),
+  fetchImpl=fetch,
+  resolver=lookup,
+  pollIntervalMs=1500,
+  maxPolls=60,
+  statusMinIntervalMs=3000
+}={}) {
+  const telegramProxyURL=String(process.env.TELEGRAM_PROXY_URL||'').trim();
+
+  const telegramDispatcher=telegramProxyURL
+    ? new ProxyAgent(telegramProxyURL)
+    : undefined;
+
   let state, encryptionKey;
   const running=new Set();
   const connectionLocks=new Set();
@@ -158,15 +172,22 @@ export function createSocialHandler({directory=resolve('.data'), fetchImpl=fetch
   const form=(value)=>new URLSearchParams(Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).map(([k,v])=>[k,String(v)])));
   const telegram=(config={},method,params,finalSend=false)=>{
   const token=config.token||process.env.TELEGRAM_BOT_TOKEN;
+
   if(!/^\d{5,20}:[A-Za-z0-9_-]{20,100}$/.test(token||'')) {
-    throw new SocialError('Telegram-бот LABRICA не настроен на сервере',500,'TELEGRAM_NOT_CONFIGURED');
+    throw new SocialError(
+      'Telegram-бот LABRICA не настроен на сервере',
+      500,
+      'TELEGRAM_NOT_CONFIGURED'
+    );
   }
+
   return request(
     'telegram',
     `https://api.telegram.org/bot${token}/${method}`,
     {
       method:'POST',
-      body:params instanceof FormData?params:form(params)
+      body:params instanceof FormData?params:form(params),
+      ...(telegramDispatcher?{dispatcher:telegramDispatcher}:{})
     },
     finalSend
   ).then(r=>r.result);
