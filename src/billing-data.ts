@@ -54,6 +54,20 @@ export async function registerAccount(input:{name:string;email:string;phone:stri
  window.dispatchEvent(new Event(CHANGE_EVENT));return publicAccount(account);
 }
 export async function loginAccount(email:string,password:string):Promise<BillingAccount> {const database=readDatabase();const account=database.accounts.find(item=>item.email===email.trim().toLowerCase());if(!account||await hashPassword(password,account.passwordSalt)!==account.passwordHash)throw new Error('Проверьте электронную почту и пароль.');if(account.status==='blocked')throw new Error('Аккаунт заблокирован. Обратитесь к администратору.');account.lastSeenAt=new Date().toISOString();appendLog(database,'Вход в аккаунт',account.email,account.id);writeDatabase(database);sessionStorage.setItem(SESSION_KEY,account.id);window.dispatchEvent(new Event(CHANGE_EVENT));return publicAccount(account);}
+export async function resetAccountPassword(email:string,password:string,proof:string) {const normalized=email.trim().toLowerCase();if(password.length<8)throw new Error('Пароль должен содержать минимум 8 символов.');const database=readDatabase(),account=database.accounts.find(item=>item.email===normalized);if(!account)throw new Error('Аккаунт с этой почтой не найден.');await authRequest('consume',{proof,email:normalized});const salt=asHex(crypto.getRandomValues(new Uint8Array(16)));account.passwordSalt=salt;account.passwordHash=await hashPassword(password,salt);appendLog(database,'Пароль изменён',normalized,account.id);writeDatabase(database);}
+const TRANSFER_PREFIX='labrica-account-transfer:';
+export function prepareAccountTransfer(account:BillingAccount){window.name=TRANSFER_PREFIX+JSON.stringify(account);}
+export function acceptAccountTransfer(){
+ if(!window.name.startsWith(TRANSFER_PREFIX))return null;
+ try{
+  const account=JSON.parse(window.name.slice(TRANSFER_PREFIX.length)) as BillingAccount;
+  if(!account?.id||!account.email)throw Error();
+  const database=readDatabase(),existing=database.accounts.find(item=>item.id===account.id);
+  const transferred:StoredAccount={...account,passwordHash:existing?.passwordHash||'',passwordSalt:existing?.passwordSalt||''};
+  if(existing)Object.assign(existing,transferred);else database.accounts.push(transferred);
+  writeDatabase(database);sessionStorage.setItem(SESSION_KEY,account.id);window.name='';window.dispatchEvent(new Event(CHANGE_EVENT));return account;
+ }catch{window.name='';return null;}
+}
 export function logoutAccount() {const account=getCurrentAccount();if(account){const database=readDatabase();findAccount(database,account.id).lastSeenAt=null;appendLog(database,'Выход из аккаунта',account.email,account.id);writeDatabase(database);}sessionStorage.removeItem(SESSION_KEY);window.dispatchEvent(new Event(CHANGE_EVENT));}
 export function heartbeatAccount(accountId:string) {const database=readDatabase();const account=database.accounts.find(item=>item.id===accountId);if(!account||account.status==='blocked')return;account.lastSeenAt=new Date().toISOString();try{writeDatabase(database);}catch{/* A heartbeat should not interrupt work. */}}
 export function isAccountOnline(account:BillingAccount,now=Date.now()) {return account.status==='active'&&Boolean(account.lastSeenAt)&&now-new Date(account.lastSeenAt!).getTime()<65000;}

@@ -2,7 +2,7 @@ export type Edition = 'ygroup' | 'labrika';
 export const edition:Edition = 'labrika';
 export const isLabrika = true;
 export const productName = isLabrika ? 'LABRICA' : 'YGROUP';
-export const basePath = isLabrika ? '/labrika' : '/ygroup';
+export const basePath = isLabrika ? '/' : '/ygroup';
 export function workspaceKey(key:string):string {
   if (!isLabrika) return key.startsWith('ygroup-') ? key : `ygroup-${key}`;
   const accountId=sessionStorage.getItem('labrika-current-account')||localStorage.getItem('labrika-current-account')||'guest';

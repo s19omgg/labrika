@@ -14,7 +14,7 @@ test('deployment origin describes only the public landing in canonical and sitem
  const plugin=landingSeo('https://content.example.com/');const files=[];
  const tags=plugin.transformIndexHtml('',{path:'/index.html'});
  assert.equal(tags[0].attrs.href,'https://content.example.com/');
- assert.equal(plugin.transformIndexHtml('',{path:'/labrika/index.html'}),undefined);
+ assert.equal(plugin.transformIndexHtml('',{path:'/app/index.html'}),undefined);
  plugin.generateBundle.call({emitFile:file=>files.push(file)});
  assert.match(files[0].source,/Sitemap: https:\/\/content\.example\.com\/sitemap\.xml/);
  assert.match(files[1].source,/<loc>https:\/\/content\.example\.com\/<\/loc>/);

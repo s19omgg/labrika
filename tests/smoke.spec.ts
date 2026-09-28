@@ -34,7 +34,7 @@ test('шесть шагов прокрутки показывают макеты
 });
 
 test('название компании компактно и выровнено с логотипом',async({page})=>{
-  await page.goto('/labrika/?auth=login');
+  await page.goto('/auth/login');
   // Isolated visual fixture: no account is created and no workspace data is seeded.
   await page.evaluate(()=>{
     const host=document.createElement('div');host.className='design-v2 workspace-v3';host.id='brand-alignment-fixture';
@@ -115,7 +115,7 @@ test('без WebGL лендинг сохраняет статичного мас
   await expect(mascot).toHaveAttribute('data-mascot-mode','fallback');
   await expect(mascot.locator('img')).toBeVisible();
   await expect(mascot.locator('canvas')).toHaveCount(0);
-  await expect(page.locator('.header-signup')).toHaveAttribute('href',/labrika\/\?auth=signup$/);
+  await expect(page.locator('.header-signup')).toHaveAttribute('href',/auth\.localhost:\d+\/signup$/);
 });
 
 test('маскот проходит сцены и сохраняет финальный жест без цикла',async({page})=>{
@@ -134,9 +134,47 @@ test('маскот проходит сцены и сохраняет финал�
   await expect(mascot.locator('img')).toBeVisible();
 });
 
-test('кабинет и админка LABRICA доступны в том же проекте',async({page})=>{
-  await page.goto('/labrika/?auth=login');
+test('авторизация и админка LABRICA имеют отдельные входы',async({page})=>{
+  await page.goto('/auth/login');
   await expect(page.getByRole('button',{name:'Войти в пространство'})).toBeVisible();
-  await page.goto('/labrika/admin/');
+  await expect(page.getByRole('button',{name:'Забыли пароль?'})).toBeVisible();
+  await page.goto('/admin');
+  await page.getByLabel('Логин').fill('admin@labrica.com');
+  await page.locator('input[autocomplete="current-password"]').fill('adminadmin');
+  await page.getByRole('button',{name:'Войти',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Обзор',exact:true})).toBeVisible();
+});
+
+test('регистрация требует отдельные юридические согласия',async({page})=>{
+  await page.goto('/auth/signup');
+  await expect(page.getByText('Я принимаю Пользовательское соглашение')).toBeVisible();
+  await expect(page.getByText(/Я даю согласие на обработку персональных данных/)).toBeVisible();
+  await expect(page.getByText(/Хочу получать новости и предложения LABRICA/)).toBeVisible();
+  const boxes=page.locator('.entry-consents input[type="checkbox"]');
+  await expect(boxes).toHaveCount(3);
+  for(let index=0;index<3;index++)await expect(boxes.nth(index)).not.toBeChecked();
+  await expect(page.locator('.entry-consents a').nth(0)).toHaveAttribute('href',/legal\.localhost:\d+\/terms$/);
+});
+
+test('legal-раздел публикует документы отдельными адресами',async({page})=>{
+  await page.goto('/legal/terms');
+  await expect(page.getByRole('heading',{name:'Пользовательское соглашение',exact:true})).toBeVisible();
+  await expect(page.locator('.legal-source')).toContainText('1. Платформа');
+  await expect(page.getByRole('link',{name:'Скачать DOCX ↓'})).toHaveAttribute('href','/legal-documents/terms.docx');
+  await expect(page.locator('body')).not.toContainText('Перед публикацией: контрольный чек-лист');
+  await expect(page.locator('body')).not.toContainText('Юридические тексты интерфейсов LABRICA');
+});
+
+test('старый адрес админки удалён',async({request})=>{
+  const response=await request.get('/labrika/admin/');
+  expect(response.status()).toBe(404);
+});
+
+test('cookie-баннер сохраняет минимальный выбор',async({page})=>{
+  await page.goto('/');
+  const banner=page.getByRole('complementary',{name:'Настройки cookie'});
+  await expect(banner).toBeVisible();
+  await banner.getByRole('button',{name:'Только необходимые'}).click();
+  await expect(banner).toHaveCount(0);
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('labrica-cookie-consent-v1')||'null')?.analytics)).toBe(false);
 });

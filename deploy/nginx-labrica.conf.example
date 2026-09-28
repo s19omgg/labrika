@@ -1,0 +1,24 @@
+# All LABRICA hostnames point to the same Node process. The application routes
+# the request by Host, so the proxy must preserve it.
+upstream labrica_app {
+    server 127.0.0.1:3001;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name labrica.pro www.labrica.pro app.labrica.pro auth.labrica.pro admin.labrica.pro legal.labrica.pro;
+
+    location / {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_pass http://labrica_app;
+    }
+}
+
+# In production replace the HTTP listener with HTTPS certificates covering all
+# listed names (or issue one certificate per subdomain) and redirect HTTP to HTTPS.
