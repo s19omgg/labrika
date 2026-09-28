@@ -6,11 +6,10 @@ import App from './App';
 import CookieBanner from './CookieBanner';
 import LabricaBrand from './LabricaBrand';
 import {WorkspaceProvider} from './store';
-import {acceptAccountTransfer,logoutAccount,useBillingAccount} from './billing-data';
+import {bootstrapBillingSession,logoutAccount,useBillingAccount} from './billing-data';
 import {serviceUrl} from './service-urls';
 import './product-styles';
 
-acceptAccountTransfer();
 
 function PublicWorkspace(){
   const account=useBillingAccount();
@@ -21,4 +20,8 @@ function PublicWorkspace(){
 }
 
 document.title='LABRICA · Контент-платформа';
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><ThemeController/><PublicWorkspace/><CookieBanner/></React.StrictMode>);
+async function start(){
+  await bootstrapBillingSession();
+  ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><ThemeController/><PublicWorkspace/><CookieBanner/></React.StrictMode>);
+}
+void start();

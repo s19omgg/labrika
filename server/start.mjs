@@ -1,8 +1,10 @@
 import 'dotenv/config';
+import {createAccountStore} from './account-store.mjs';
 import {createAuthHandler} from './auth-service.mjs';
-const auth=createAuthHandler();
 import {createAdminAuthHandler} from './admin-auth.mjs';
-const adminAuth=createAdminAuthHandler();
+const accountStore=createAccountStore();
+const auth=createAuthHandler({accountStore});
+const adminAuth=createAdminAuthHandler({accountStore});
 import {createServer} from 'node:http';
 import {readFileSync,statSync,existsSync} from 'node:fs';
 import {resolve,extname,sep} from 'node:path';
