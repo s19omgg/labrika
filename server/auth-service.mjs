@@ -24,6 +24,8 @@ export function createAuthHandler({directory='.data',issuerKey=process.env.APPRO
  const save=config=>{const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',encryptionKey,iv),data=Buffer.concat([cipher.update(JSON.stringify(config)),cipher.final()]);writeFileSync(file+'.tmp',JSON.stringify({iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')}),{mode:0o600});renameSync(file+'.tmp',file);};
  const view=config=>config?{host:config.host,port:config.port,secure:config.secure,user:config.user,from:config.from,fromName:config.fromName,configured:!!config.password}:{host:'',port:465,secure:true,user:'',from:'',fromName:'LABRICA',configured:false};
  const challenges=new Map(),proofs=new Map(),limits=new Map();
+ const emailTelemetry={sent:0,failed:0,lastSuccessAt:null,lastFailureAt:null,lastError:null};
+ const smtpTelemetry={lastCheckAt:null,status:'not_checked'};
  const transport=config=>transportFactory({host:config.host,port:config.port,secure:config.secure,requireTLS:!config.secure,auth:{user:config.user,pass:config.password},connectionTimeout:15000,greetingTimeout:15000,socketTimeout:20000,logger:false,debug:false,disableFileAccess:true,disableUrlAccess:true});
  const takeLimit=(key,max,windowMs)=>{let bucket=limits.get(key);if(!bucket||bucket.until<=now()){bucket={count:0,until:now()+windowMs};limits.set(key,bucket);}if(bucket.count>=max)throw fail(429,'Слишком много попыток. Попробуйте позже.');bucket.count++;};
  const cleanup=()=>{for(const map of [challenges,proofs,limits])for(const [key,value] of map)if((value.expiresAt??value.until)<=now())map.delete(key);};
@@ -42,7 +44,7 @@ export function createAuthHandler({directory='.data',issuerKey=process.env.APPRO
   return `labrica_session=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${domain}${secure?'; Secure':''}`;
  };
 
- return async function auth(req,res,next=()=>{res.statusCode=404;res.end();}){
+ const handler=async function auth(req,res,next=()=>{res.statusCode=404;res.end();}){
   const path=new URL(req.url,'http://localhost').pathname;if(!path.startsWith('/api/auth/'))return next();
   const reply=(status,value,headers={})=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers});res.end(JSON.stringify(value));};
   try{
@@ -57,7 +59,7 @@ export function createAuthHandler({directory='.data',issuerKey=process.env.APPRO
      if(!/^[a-zA-Z0-9.-]+$/.test(config.host)||!Number.isInteger(config.port)||config.port<1||config.port>65535||!config.user||!config.password||!emailOK(config.from)||/[\r\n]/.test(config.fromName)||config.fromName.length>100)throw fail(400,'Проверьте сервер, порт, логин, пароль и адрес отправителя');
      save(config);return reply(200,view(config));
     }
-    if(path==='/api/auth/smtp/check'&&req.method==='POST'){const config=read();if(!config)throw fail(409,'Сначала сохраните настройки');try{await transport(config).verify();}catch{throw fail(502,'Не удалось подключиться к почтовому серверу. Проверьте настройки.');}return reply(200,{connected:true});}
+    if(path==='/api/auth/smtp/check'&&req.method==='POST'){const config=read();if(!config)throw fail(409,'Сначала сохраните настройки');smtpTelemetry.lastCheckAt=new Date(now()).toISOString();try{await transport(config).verify();smtpTelemetry.status='connected';}catch{smtpTelemetry.status='error';throw fail(502,'Не удалось подключиться к почтовому серверу. Проверьте настройки.');}return reply(200,{connected:true});}
     throw fail(405,'Метод недоступен');
    }
 
@@ -97,26 +99,52 @@ export function createAuthHandler({directory='.data',issuerKey=process.env.APPRO
 
    if(req.method!=='POST')throw fail(405,'Метод недоступен');
    const input=await body(req),ip=req.socket.remoteAddress||'local';
+
    if(path==='/api/auth/email/start'){
     const email=String(input.email||'').trim().toLowerCase();if(!emailOK(email))throw fail(400,'Укажите корректную почту');
     const config=read();if(!config?.password)throw fail(503,'Отправка писем ещё не настроена. Попробуйте зарегистрироваться позже.');
     takeLimit(`cooldown:${email}`,1,60000);takeLimit(`email:${email}`,5,3600000);takeLimit(`ip:${ip}`,30,3600000);
     const code=String(randomInt(0,1000000)).padStart(6,'0'),id=randomBytes(24).toString('base64url');
+
     try{
      const emailContent=verificationEmail(code);
-     const receipt=await transport(config).sendMail({from:{name:config.fromName,address:config.from},to:email,subject:emailContent.subject,text:emailContent.text,html:emailContent.html});
+     const receipt=await transport(config).sendMail({
+      from:{name:config.fromName,address:config.from},
+      to:email,
+      subject:emailContent.subject,
+      text:emailContent.text,
+      html:emailContent.html
+     });
      if(!receipt.accepted?.some(address=>String(address).toLowerCase()===email))throw Error('rejected');
-    }catch{throw fail(502,'Не удалось отправить письмо. Попробуйте через минуту.');}
+     emailTelemetry.sent++;emailTelemetry.lastSuccessAt=new Date(now()).toISOString();emailTelemetry.lastError=null;
+    }catch(error){
+     emailTelemetry.failed++;emailTelemetry.lastFailureAt=new Date(now()).toISOString();emailTelemetry.lastError='Не удалось отправить письмо подтверждения';
+     console.error('Verification email error:',error);
+     throw fail(502,'Не удалось отправить письмо. Попробуйте через минуту.');
+    }
+
     for(const [key,value] of challenges)if(value.email===email)challenges.delete(key);
-    challenges.set(id,{email,hash:digest(`${id}:${code}`).toString('hex'),attempts:0,expiresAt:now()+600000});return reply(200,{challengeId:id,expiresIn:600,retryAfter:60});
+    challenges.set(id,{email,hash:digest(`${id}:${code}`).toString('hex'),attempts:0,expiresAt:now()+600000});
+    return reply(200,{challengeId:id,expiresIn:600,retryAfter:60});
    }
+
    if(path==='/api/auth/email/verify'){
     takeLimit(`verify:${ip}`,60,60000);const id=String(input.challengeId||''),challenge=challenges.get(id);if(!challenge||challenge.attempts>=5)throw fail(400,'Код истёк. Запросите новый.');challenge.attempts++;
     if(!/^\d{6}$/.test(String(input.code))||!same(challenge.hash,digest(`${id}:${input.code}`).toString('hex')))throw fail(400,'Неверный код');
     challenges.delete(id);const proof=randomBytes(32).toString('base64url');proofs.set(proof,{email:challenge.email,expiresAt:now()+300000});return reply(200,{proof,email:challenge.email});
    }
+
    if(path==='/api/auth/email/consume'){consumeProof(input.proof,input.email);return reply(200,{verified:true});}
    throw fail(404,'Не найдено');
   }catch(error){return reply(error.status||500,{error:error.status?error.message:'Не удалось выполнить запрос'});}
  };
+ handler.accountForRequest=sessionAccount;
+ handler.adminStatus=()=>{
+  const config=read();
+  return{
+   smtp:{configured:Boolean(config?.password),host:config?.host||null,port:config?.port||null,secure:Boolean(config?.secure),from:config?.from||null,source:envConfig()?'environment':config?'encrypted_file':'none',...smtpTelemetry},
+   verificationEmails:{...emailTelemetry},
+  };
+ };
+ return handler;
 }

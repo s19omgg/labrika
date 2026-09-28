@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import mascotManifest from '../assets/mascot/labi.json';
 
 type MaskoAnimationAsset = {
-  transparent_video_mov: string;
-  video: string;
-  transparent_video_webm: string;
+  video?: string;
+  transparent_video_mov?: string;
+  transparent_video_webm?: string;
+  transparent_video_android?: string;
   transparent_video_android_720?: string;
   transparent_video_mov_720?: string;
   transparent_video_webm_720?: string;
-  transparent_video_android?: string;
 };
 
 type MaskoItem = {
@@ -47,25 +47,50 @@ function chooseSources(asset: MaskoAnimationAsset) {
       ? asset.transparent_video_mov_720
       : asset.transparent_video_mov;
 
-  return prefersHevcAlpha()
-    ? [mov, webm]
-    : [webm, mov];
+  const sources: string[] = [];
+
+  // Safari / iPhone
+  if (prefersHevcAlpha()) {
+    if (mov) sources.push(mov);
+    if (webm) sources.push(webm);
+  } else {
+    // Chrome / Firefox / Edge
+    if (webm) sources.push(webm);
+    if (mov) sources.push(mov);
+  }
+
+  // Запасной обычный MP4
+  if (asset.video && !sources.includes(asset.video)) {
+    sources.push(asset.video);
+  }
+
+  return sources;
 }
 
 export default function MaskoMascot({
   animation,
   className = '',
 }: {
-  animation: string;
+  animation?: string;
   className?: string;
 }) {
   const video = useRef<HTMLVideoElement>(null);
 
-  const item = (
-    mascotManifest.items as MaskoItem[]
-  ).find(entry => entry.name === animation);
+  /*
+   * Если animation передан — пытаемся найти его.
+   * Если нет или такого имени больше нет —
+   * автоматически используем первый item из JSON.
+   *
+   * Благодаря этому для замены маскота достаточно
+   * просто заменить assets/mascot/labi.json.
+   */
+  const items = mascotManifest.items as MaskoItem[];
 
-  const asset = item?.animations[0];
+  const item = animation
+    ? items.find(entry => entry.name === animation) ?? items[0]
+    : items[0];
+
+  const asset = item?.animations?.[0];
 
   const sources = useMemo(
     () => (asset ? chooseSources(asset) : []),
@@ -122,9 +147,7 @@ export default function MaskoMascot({
           return;
         }
 
-        void element
-          .play()
-          .catch(() => undefined);
+        void element.play().catch(() => undefined);
       },
       {
         threshold: 0.05,
@@ -143,21 +166,13 @@ export default function MaskoMascot({
   }
 
   /*
-   * Настройка бесшовного цикла.
+   * Настройка цикла.
    *
    * START — сколько секунд пропускаем в начале.
-   * END   — сколько секунд не проигрываем в конце.
-   *
-   * Можно подбирать независимо:
-   *
-   * 0.40
-   * 0.45
-   * 0.50
-   * 0.55
-   * и т.д.
+   * END   — сколько секунд отрезаем в конце.
    */
-  const LOOP_START_TRIM = 0.5;
-  const LOOP_END_TRIM = 0.6;
+  const LOOP_START_TRIM = 1.5;
+  const LOOP_END_TRIM = 1.5;
 
   return (
     <video
@@ -169,7 +184,6 @@ export default function MaskoMascot({
       preload="auto"
       disablePictureInPicture
       aria-hidden="true"
-
       onLoadedMetadata={event => {
         const element = event.currentTarget;
 
@@ -180,12 +194,6 @@ export default function MaskoMascot({
           return;
         }
 
-        /*
-         * Если у пользователя включено
-         * "уменьшение движения",
-         * показываем почти финальный кадр
-         * и не запускаем анимацию.
-         */
         if (reduced) {
           element.currentTime = Math.max(
             0,
@@ -196,17 +204,14 @@ export default function MaskoMascot({
           return;
         }
 
-        /*
-         * При первом запуске сразу
-         * пропускаем статичную часть в начале.
-         */
-        element.currentTime = LOOP_START_TRIM;
+        // Сразу пропускаем паузу в начале.
+        element.currentTime = Math.min(
+          LOOP_START_TRIM,
+          Math.max(0, element.duration - LOOP_END_TRIM)
+        );
 
-        void element
-          .play()
-          .catch(() => undefined);
+        void element.play().catch(() => undefined);
       }}
-
       onTimeUpdate={event => {
         if (reduced) {
           return;
@@ -223,10 +228,9 @@ export default function MaskoMascot({
         }
 
         /*
-         * Не ждём физического конца видео.
-         * Как только дошли до точки перед
-         * финальной паузой — возвращаемся
-         * сразу к рабочему началу анимации.
+         * Не ждём физического окончания файла.
+         * Сразу возвращаемся к началу рабочего
+         * участка анимации.
          */
         if (
           element.currentTime >=
@@ -234,16 +238,13 @@ export default function MaskoMascot({
         ) {
           element.currentTime = LOOP_START_TRIM;
 
-          void element
-            .play()
-            .catch(() => undefined);
+          void element.play().catch(() => undefined);
         }
       }}
-
       onError={() => {
         /*
-         * Если основной формат не загрузился,
-         * пробуем второй.
+         * Если WebM/MOV не сработал,
+         * автоматически пробуем следующий формат.
          */
         if (sourceIndex + 1 < sources.length) {
           setSourceIndex(index => index + 1);

@@ -27,6 +27,7 @@ body{background:#e1e3e9;padding:32px}
 .design-v2 .rail-button{display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;width:40px;height:40px;padding:0;border-radius:50%;background:transparent;color:#606772}
 .design-v2 .rail-button:hover{background:#f4f4f6;color:#191d24}
 .design-v2 .rail-button.rail-active{background:#181a1d;color:#20de7c}
+.labi-ai-mark{display:block;object-fit:contain;border-radius:50%;flex:0 0 auto}.design-v2 .rail-button .labi-ai-mark{width:22px;height:22px}.labi-ai-title{display:flex;align-items:center;gap:11px}.labi-ai-title .labi-ai-mark{width:34px;height:34px}
 .design-v2 .rail-tooltip{position:absolute;left:49px;top:50%;transform:translateY(-50%) translateX(-3px);pointer-events:none;opacity:0;background:#1d1e23;color:#fff;font-size:11px;font-weight:500;padding:8px 11px;border-radius:8px;white-space:nowrap;transition:opacity 140ms ease,transform 140ms var(--ease);box-shadow:0 4px 15px #1b1d2310;z-index:50}
 .design-v2 .rail-button:hover .rail-tooltip,.design-v2 .rail-button:focus-visible .rail-tooltip{opacity:1;transform:translateY(-50%) translateX(0)}
 .design-v2 .main-shell{margin-left:90px}

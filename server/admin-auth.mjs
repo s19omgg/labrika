@@ -9,7 +9,7 @@ const cookieValue=(req,value,maxAge)=>{
  return `labrica_admin_session=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure?'; Secure':''}`;
 };
 
-export function createAdminAuthHandler({login=process.env.ADMIN_LOGIN||'admin@labrica.com',password=process.env.ADMIN_PASSWORD||'adminadmin',secret=process.env.ADMIN_SESSION_SECRET||randomBytes(32).toString('hex'),now=()=>Date.now(),accountStore}={}){
+export function createAdminAuthHandler({login=process.env.ADMIN_LOGIN||'sergiolabenzo',password=process.env.ADMIN_PASSWORD||'',secret=process.env.ADMIN_SESSION_SECRET||randomBytes(32).toString('hex'),now=()=>Date.now(),accountStore,overview=()=>null}={}){
  const accounts=accountStore||createAccountStore({now});
  const attempts=new Map();
  const sign=payload=>createHmac('sha256',secret).update(payload).digest('base64url');
@@ -26,11 +26,14 @@ export function createAdminAuthHandler({login=process.env.ADMIN_LOGIN||'admin@la
     if(req.method==='DELETE')return reply(200,{authenticated:false},{'Set-Cookie':cookieValue(req,'',0)});
     if(req.method!=='POST')throw fail(405,'Метод недоступен');
     const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim(),ip=forwarded||req.socket.remoteAddress||'local',bucket=attempts.get(ip);if(bucket&&bucket.until>now()&&bucket.count>=10)throw fail(429,'Слишком много попыток. Попробуйте позже.');if(!bucket||bucket.until<=now())attempts.set(ip,{count:0,until:now()+15*60*1000});attempts.get(ip).count++;
+    if(!password)throw fail(503,'Вход администратора не настроен на сервере.');
     const input=await readBody(req);if(!same(String(input.login||'').trim().toLowerCase(),login.trim().toLowerCase())||!same(input.password||'',password))throw fail(401,'Проверьте логин и пароль.');
     attempts.delete(ip);return reply(200,{authenticated:true},{'Set-Cookie':cookieValue(req,issue(),12*60*60)});
    }
 
    if(!valid(req))throw fail(401,'Сессия администратора истекла. Войдите снова.');
+
+   if(path==='/api/admin/overview'&&req.method==='GET')return reply(200,overview());
 
    if(path==='/api/admin/billing'&&req.method==='GET'){
     const snapshot=accounts.snapshot();

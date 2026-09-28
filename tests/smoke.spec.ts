@@ -16,6 +16,15 @@ test('публичный лендинг LABRICA запускается отде�
   expect(errors).toEqual([]);
 });
 
+test('LABI AI использует голову маскота без цветной подложки',async({page})=>{
+  await page.goto('/');
+  await expect(page.getByRole('link',{name:'LABI AI'})).toBeVisible();
+  await page.locator('#ai').scrollIntoViewIfNeeded();
+  const avatar=page.locator('.ai-avatar');
+  await expect(avatar.locator('img[src$="/brand/labi-ai.png"]')).toBeVisible();
+  await expect(avatar).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
+});
+
 test('шесть шагов прокрутки показывают макеты вместо скриншотов',async({page})=>{
   await page.goto('/');
   const section=page.locator('#how-it-works');
@@ -139,10 +148,12 @@ test('авторизация и админка LABRICA имеют отдельн
   await expect(page.getByRole('button',{name:'Войти в пространство'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Забыли пароль?'})).toBeVisible();
   await page.goto('/admin');
-  await page.getByLabel('Логин').fill('admin@labrica.com');
-  await page.locator('input[autocomplete="current-password"]').fill('adminadmin');
+  await page.getByLabel('Логин').fill('test-admin');
+  await page.locator('input[autocomplete="current-password"]').fill('test-admin-password');
   await page.getByRole('button',{name:'Войти',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Обзор',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Состояние LABRICA',exact:true})).toBeVisible();
+  await expect(page.getByText('Провайдер не подключён',{exact:true})).toBeVisible();
 });
 
 test('регистрация требует отдельные юридические согласия',async({page})=>{

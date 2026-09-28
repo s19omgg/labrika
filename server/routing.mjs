@@ -1,5 +1,6 @@
 const serviceHosts={app:'app.labrica.pro',auth:'auth.labrica.pro',admin:'admin.labrica.pro',legal:'legal.labrica.pro'};
 const entryFiles={app:'/app/index.html',auth:'/auth/index.html',admin:'/admin/index.html',legal:'/legal/index.html'};
+const infrastructureHosts={api:'api.labrica.pro',assets:'assets.labrica.pro',hooks:'hooks.labrica.pro',status:'status.labrica.pro',media:'media.labrica.pro',files:'files.labrica.pro'};
 
 function hostname(req){return String(req.headers.host||'').split(':')[0].toLowerCase();}
 function serviceFromHost(host){
@@ -9,6 +10,18 @@ function serviceFromHost(host){
 function isPageRequest(pathname){return !pathname.startsWith('/@')&&!pathname.startsWith('/api/')&&!pathname.startsWith('/assets/')&&!pathname.startsWith('/fonts/')&&!pathname.startsWith('/brand/')&&!pathname.startsWith('/landing-assets/')&&!pathname.startsWith('/legal-documents/')&&!/\.[a-z0-9]{2,8}$/i.test(pathname);}
 function withQuery(req,path){const query=(req.url||'').includes('?')?'?'+(req.url||'').split('?').slice(1).join('?'):'';req.url=path+query;}
 function redirect(res,location){res.writeHead(308,{Location:location,'Cache-Control':'no-store'});res.end();}
+function notFound(res){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end('Not found');}
+
+/** Keeps infrastructure subdomains narrow even when they share one Node process. */
+export function infrastructureGate(req,res,next){
+ const host=hostname(req),pathname=(req.url||'/').split('?')[0];
+ if(host===infrastructureHosts.status){if(pathname==='/')req.url='/api/health';else if(pathname!=='/api/health')return notFound(res);return next();}
+ if(host===infrastructureHosts.hooks){if(pathname!=='/api/social/telegram/webhook')return notFound(res);return next();}
+ if(host===infrastructureHosts.api){if(!pathname.startsWith('/api/'))return notFound(res);return next();}
+ if(host===infrastructureHosts.assets){if(!['/assets/','/fonts/','/brand/','/landing-assets/'].some(prefix=>pathname.startsWith(prefix)))return notFound(res);return next();}
+ if(host===infrastructureHosts.media||host===infrastructureHosts.files)return notFound(res);
+ next();
+}
 
 export function editionRoutes(req,res,next){
  const pathname=(req.url||'/').split('?')[0],host=hostname(req);

@@ -5,6 +5,7 @@ import { getLearning, preferenceSummary } from './learning';
 import { getBrain, knowledgeLabels, verificationLabels } from './brain-data';
 import { formatNumber } from './model';
 import { goalOptions } from './media-generation';
+import LabiAiMark from './LabiAiMark';
 import './labrika-ai.css';
 
 const dateLabel = (value: string) => {
@@ -105,7 +106,7 @@ export default function LabrikaAI() {
   ];
 
   return <div className="ai-page ai-page-v2">
-    <div className="page-heading"><h1 className="page-title">LABRICA AI</h1>{section === 'company' && <button className="ai-header-action" onClick={() => navigate('brain')}>База знаний <ArrowUpRight size={16} /></button>}</div>
+    <div className="page-heading"><h1 className="page-title labi-ai-title"><LabiAiMark size={34}/>LABI AI</h1>{section === 'company' && <button className="ai-header-action" onClick={() => navigate('brain')}>База знаний <ArrowUpRight size={16} /></button>}</div>
     {section !== 'company' ? <Overview onCompany={() => setSection('company')} onCreate={() => navigate('controller')} /> : <div className="ai-company-grid">
       <section className="ai-company-card ai-company-passport">
         <div className="ai-section-top"><span className="ai-card-label"><BookOpen size={17} /> Память компании</span>{brain.updatedAt && <span className="ai-updated">Обновлено {dateLabel(brain.updatedAt)}</span>}</div>

@@ -184,5 +184,11 @@ export function createProviderService({directory='.data',issuerKey=process.env.A
    fail('Не найдено',404);
   }catch(error){if(!res.writableEnded&&!res.destroyed)json(res,error.status||500,{error:error.status?error.message:'Не удалось выполнить запрос к генерации.'});}
  }
- return {handler,creativeAdapter,capabilities:edition=>{initialize();if(!EDITIONS.includes(edition))fail('Неизвестное пространство');return configured(state[edition]);},generate};
+ return {
+  handler,
+  creativeAdapter,
+  capabilities:edition=>{initialize();if(!EDITIONS.includes(edition))fail('Неизвестное пространство');return configured(state[edition]);},
+  status:edition=>{initialize();if(!EDITIONS.includes(edition))fail('Неизвестное пространство');return safe(edition);},
+  generate,
+ };
 }

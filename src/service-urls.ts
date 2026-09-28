@@ -1,4 +1,4 @@
-export type LabricaService='landing'|'app'|'auth'|'admin'|'legal';
+export type LabricaService='landing'|'api'|'admin'|'app'|'assets'|'auth'|'dev'|'docs'|'files'|'help'|'hooks'|'legal'|'media'|'staging'|'status';
 
 const productionHosts:Record<LabricaService,string>={
   landing:'labrica.pro',
@@ -6,6 +6,16 @@ const productionHosts:Record<LabricaService,string>={
   auth:'auth.labrica.pro',
   admin:'admin.labrica.pro',
   legal:'legal.labrica.pro',
+  api:'api.labrica.pro',
+  assets:'assets.labrica.pro',
+  dev:'dev.labrica.pro',
+  docs:'docs.labrica.pro',
+  files:'files.labrica.pro',
+  help:'help.labrica.pro',
+  hooks:'hooks.labrica.pro',
+  media:'media.labrica.pro',
+  staging:'staging.labrica.pro',
+  status:'status.labrica.pro',
 };
 
 export function serviceUrl(service:LabricaService,path='/'){

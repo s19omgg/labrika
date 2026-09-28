@@ -88,7 +88,8 @@ export function createSocialHandler({
   resolver=lookup,
   pollIntervalMs=1500,
   maxPolls=60,
-  statusMinIntervalMs=3000
+  statusMinIntervalMs=3000,
+  resolveAccount=()=>null,
 }={}) {
   const telegramProxyURL=String(process.env.TELEGRAM_PROXY_URL||'').trim();
 
@@ -151,6 +152,8 @@ export function createSocialHandler({
     const id=String(req.headers['x-social-workspace']||''), key=String(req.headers['x-social-key']||'');
     const workspace=state.workspaces[id];
     if(!workspace || !/^[a-f0-9]{64}$/.test(key) || !timingSafeEqual(Buffer.from(digest(key)),Buffer.from(workspace.keyHash))) throw new SocialError('Доступ к подключениям не найден. Откройте настройки заново.',401,'WORKSPACE_ACCESS_DENIED');
+    const account=resolveAccount(req);
+    if(account&&!workspace.accountId){workspace.accountId=account.ownerId||account.id;persist();}
     return workspace;
   }
   const publicConnection=c=>({platform:c.platform,accountId:c.accountId,accountName:c.accountName,accountHandle:c.accountHandle,connectedAt:c.connectedAt,checkedAt:c.checkedAt,status:c.status,error:c.error,capabilities:c.capabilities});
@@ -474,7 +477,7 @@ export function createSocialHandler({
     } else throw new SocialError('TikTok вернул неизвестный статус. Проверьте позже.',502,'PROVIDER_RESPONSE');
     record.checkedAt=now();persist();return record;
   }
-  return async function social(req,res,next) {
+  const handler=async function social(req,res,next) {
     const url=new URL(req.url,'http://localhost');
     if(!url.pathname.startsWith('/api/social/')) return next();
     let activeConfig;
@@ -642,7 +645,8 @@ export function createSocialHandler({
         if(++rate.count>30 || Object.keys(state.workspaces).length>=500) throw new SocialError('Слишком много запросов. Повторите позже.',429);
         signupRates.set(ip,rate);
         const workspaceId=randomUUID(), workspaceKey=randomBytes(32).toString('hex');
-        state.workspaces[workspaceId]={id:workspaceId,edition:input.edition,keyHash:digest(workspaceKey),createdAt:now(),connections:{},publications:{}};persist();
+        const account=resolveAccount(req);
+        state.workspaces[workspaceId]={id:workspaceId,edition:input.edition,keyHash:digest(workspaceKey),createdAt:now(),...(account?{accountId:account.ownerId||account.id}:{}),connections:{},publications:{}};persist();
         return send(res,201,{workspaceId,workspaceKey});
       }
       const workspace=workspaceFor(req);
@@ -771,4 +775,24 @@ export function createSocialHandler({
       throw new SocialError('Метод не поддерживается',404,'NOT_FOUND');
     } catch(error) {send(res,error instanceof SocialError?error.status:500,{error:cleanError(error,activeConfig),code:error instanceof SocialError?error.code:'INTERNAL_ERROR'});}
   };
+  handler.adminStatus=()=>{
+    init();
+    const workspaces=Object.values(state.workspaces).filter(workspace=>workspace.edition==='labrika');
+    const connections=workspaces.flatMap(workspace=>Object.values(workspace.connections).map(connection=>({
+      workspaceId:workspace.id,
+      accountId:workspace.accountId||null,
+      ...publicConnection(connection),
+    })));
+    const publications=workspaces.flatMap(workspace=>Object.values(workspace.publications));
+    return{
+      workspaceCount:workspaces.length,
+      connectionCount:connections.length,
+      connectedCount:connections.filter(connection=>connection.status==='connected').length,
+      errorCount:connections.filter(connection=>connection.status==='error').length,
+      byPlatform:Object.fromEntries(PLATFORMS.map(platform=>[platform,connections.filter(connection=>connection.platform===platform).length])),
+      connections:connections.sort((left,right)=>String(right.checkedAt||right.connectedAt||'').localeCompare(String(left.checkedAt||left.connectedAt||''))).slice(0,100),
+      publications:{total:publications.length,published:publications.filter(item=>item.status==='published').length,failed:publications.filter(item=>['failed','unknown'].includes(item.status)).length},
+    };
+  };
+  return handler;
 }
