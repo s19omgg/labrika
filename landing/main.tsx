@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import LegalDocuments, {legalTitles,type LegalDocument} from '../src/LegalDocuments';
 import './landing-dialog.css';
 import './refinements.css';
+import './platform-mockups.css';
 import {HeroMascot,FeatureArt,Walkthrough,AIChat,Pricing,Peek} from './Sections';
 import {initLandingMotion} from './motion';
 

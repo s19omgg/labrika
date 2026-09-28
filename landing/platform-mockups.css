@@ -1,0 +1,91 @@
+/* Shared optical alignment for every landing CTA, independent of font metrics. */
+.landing-page .button,.landing-page .text-link{align-items:center;justify-content:center;text-align:center;line-height:1}
+.landing-page .button-label{display:block;line-height:1;transform:translateY(.06em)}
+.landing-page .button .icon,.landing-page .text-link .icon{display:block;flex-shrink:0;align-self:center}
+@supports(text-box-trim:trim-both){.landing-page .button-label{text-box-trim:trim-both;text-box-edge:cap alphabetic;transform:none}}
+.landing-page .pricing-card>.button{justify-content:center}
+
+/* The animation's right edge coincides with the card's edge, not an inner column. */
+.hero-stage{position:relative}
+.hero-character{position:absolute;inset:0 0 0 48%;min-height:0;height:auto;margin:0;overflow:hidden;pointer-events:none}
+.hero-mascot-animation{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end}
+.hero-mascot-animation>img{display:block;height:100%;width:100%;max-width:100%;object-fit:contain}
+.hero-mascot-animation>canvas{display:block;width:100%;height:100%;max-width:100%}
+.hero-stage .hero-copy{grid-column:1}
+
+.product-window-left{height:326px;transform:rotate(-4deg)}
+.walkthrough-sticky{overflow:visible}
+.walkthrough-scene{padding-inline:18px}
+.product-window-right{height:302px;transform:rotate(4deg);background:var(--surface-soft)}
+.product-window-content{isolation:isolate}
+.mockup-slide{position:absolute;inset:0;opacity:0;transform:translateY(12px);transition:opacity 350ms var(--ease),transform 500ms var(--ease);pointer-events:none}
+.mockup-slide.is-active{opacity:1;transform:translateY(0)}
+.platform-mockup{height:100%;padding:22px;color:var(--ink);font-family:Geometria,Onest,sans-serif;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+.platform-mockup h4{font-size:18px;font-weight:700;letter-spacing:-.04em;line-height:1.3;margin:0}
+.platform-mockup .icon{width:16px;height:16px;flex-shrink:0}
+.mock-tabs{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:8px;white-space:nowrap}
+.mock-tabs b{font-weight:500;color:var(--ink);background:var(--surface-soft);border-radius:12px;padding:7px 10px}
+.mock-field{background:var(--surface-soft);border:1px solid var(--line);border-radius:9px;padding:10px 12px;display:flex;align-items:center;gap:14px}
+.mock-field small{font-size:8px;color:var(--muted);white-space:nowrap}
+.mock-field>i{width:40%;height:4px;border-radius:3px;background:var(--line-strong);opacity:.55}
+.mock-action{border-radius:20px;padding:11px 13px;background:var(--green);color:var(--green-ink);display:flex;align-items:center;justify-content:center;gap:12px;font-size:9px;margin-top:auto;min-height:34px}
+.mock-action .icon{width:13px;height:13px}
+.mock-space{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;height:100%;position:relative;text-align:center}
+.mock-space-symbol{display:grid;place-items:center;background:var(--mint-surface);color:var(--accent-ink);width:48px;height:48px;border:1px solid var(--line-strong);border-radius:17px}
+.mock-space-symbol .icon{width:24px;height:24px}
+.mock-space p{font-size:9px;color:var(--muted);margin:0}
+.mock-avatars{display:flex;margin:5px 0 0;padding-left:8px}
+.mock-avatars>span{height:33px;width:33px;border-radius:50%;display:grid;place-items:center;font-size:10px;background:var(--line);border:3px solid var(--surface-soft);margin-left:-8px}
+.mock-avatars>span:nth-child(2){background:#668873;color:#eef6f1}.mock-avatars>span:nth-child(3){background:#597785;color:#eef6f1}
+.mock-success{position:absolute;top:15px;right:5px;background:var(--green);color:var(--green-ink);border-radius:50%;width:25px;height:25px;display:grid;place-items:center}
+.mock-section-label{font-size:9px;display:flex;gap:8px;align-items:center;color:var(--muted)}
+.mock-section-label>.icon{color:var(--accent-ink)}
+.mock-brand-field{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.mock-field-dot{font:400 8px var(--font-mono);color:var(--muted)}
+.mock-brand-field>div{flex:1}.mock-brand-field small{font-size:9px}.mock-brand-field>.icon{width:12px;height:12px;color:var(--accent-ink)}
+.mock-lines{display:grid;gap:5px;margin-top:7px;width:100%}.mock-lines i{display:block;width:100%;max-width:170px;height:4px;border-radius:3px;background:var(--line-strong);opacity:.55}.mock-lines i:nth-child(2){width:80%}.mock-lines i:nth-child(3){width:54%}
+.mock-brand-field .mock-lines i:not(:first-child){display:none}
+.mock-brain{position:relative;height:100%;min-height:200px}
+.mock-brain>svg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:var(--line-strong);stroke-width:1.2}
+.mock-node{position:absolute;display:block;padding:9px 12px;font-size:9px;background:var(--surface);border:1px solid var(--line);border-radius:10px;white-space:nowrap}
+.node-a{left:0;top:12px}.node-b{right:0;top:12px}.node-c{left:0;bottom:12px}.node-d{right:0;bottom:12px}
+.mock-brain-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;padding:17px;border-radius:14px;background:var(--mint-surface);border:1px solid var(--line-strong);font-size:11px;white-space:nowrap}.mock-brain-core .icon{color:var(--accent-ink)}
+.mock-social-row{display:flex;align-items:center;gap:11px;border-top:1px solid var(--line);padding-top:10px}
+.mock-social-row b{font-weight:500;font-size:10px}.mock-social-row>.icon{width:13px;height:13px;color:var(--accent-ink);margin-left:auto}
+.mock-social-row>span,.mock-socials>span{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;font-size:12px;font-weight:700;flex-shrink:0}
+.mock-telegram{background:#567f95;color:#f2f6fa}.mock-vk{background:#456d90;color:#f2f6fa}.mock-ok{background:#8b7857;color:#fbf5ec}
+.mock-network{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%}.mock-network-core{padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:17px;z-index:1}
+.product-window .mock-network-core img{position:static;inset:auto;transform:none;opacity:1;width:35px;height:35px;max-width:100%;object-fit:contain}
+.mock-network>svg{height:65px;width:100%;fill:none;stroke:var(--line-strong);stroke-width:1.3}
+.mock-socials{display:flex;align-items:center;justify-content:space-around;gap:15px;width:100%}.mock-network .mock-socials>span{height:42px;width:42px;border-radius:13px;font-size:16px}
+.mock-network>p{font-size:9px;color:var(--muted);text-align:center;margin-top:22px}
+.mock-editor{padding:12px;border:1px solid var(--line);border-radius:11px;position:relative;flex:1;min-height:75px}.mock-editor .mock-lines+.mock-lines{margin-top:15px}.mock-editor .mock-lines i{max-width:none}.mock-caret{position:absolute;bottom:12px;left:12px;background:var(--accent-ink);width:1px;height:12px}
+.mock-post{display:flex;flex-direction:column;gap:10px;height:100%}.mock-post-author{display:flex;align-items:center;gap:8px;font-size:9px}.mock-post-author>span{width:20px;height:20px;background:var(--green);border-radius:7px}.mock-post-author>small{margin-left:auto;color:var(--muted)}
+.mock-creative{position:relative;flex:1;min-height:92px;border-radius:12px;overflow:hidden;background:#a7cbbb;isolation:isolate}.mock-creative>i{position:absolute;width:130px;height:130px;border-radius:50%;background:#244839;left:16%;bottom:-60px;transform:rotate(-20deg)}.mock-creative>i:nth-child(2){left:auto;right:-28px;top:-60px;background:#638c9e}.mock-creative>i:nth-child(3){width:70px;height:70px;left:-30px;top:-20px;background:#d6e8d6}.mock-creative>span{position:absolute;top:12px;left:12px;color:#244839}
+.mock-post .mock-lines{margin-top:0;gap:4px}.mock-post-bottom{display:flex;gap:11px;color:var(--muted);font-size:14px}.mock-post-bottom>span:last-child{margin-left:auto}
+.mock-month{display:flex;justify-content:space-between;align-items:center}.mock-month>span{font-size:13px;color:var(--muted)}
+.mock-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;flex:1}.mock-calendar>small{font-size:8px;color:var(--muted);text-align:center}.mock-calendar>span{position:relative;font-size:9px;display:grid;place-items:center;border:1px solid var(--line);border-radius:7px;min-height:29px}.mock-calendar>span.selected{background:var(--green);color:var(--green-ink);border-color:var(--green)}.mock-calendar>span>i{position:absolute;bottom:3px;width:3px;height:3px;background:var(--accent-ink);border-radius:50%}
+.mock-schedule{display:flex;align-items:center;flex-direction:column;gap:15px;height:100%}.mock-clock{width:38px;height:38px;display:grid;place-items:center;background:var(--mint-surface);border:1px solid var(--line-strong);border-radius:12px;color:var(--accent-ink)}.mock-schedule .mock-socials{width:auto;gap:9px}.mock-schedule .mock-socials>span{width:25px;height:25px;font-size:9px;border-radius:8px}.mock-date{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:10px}.mock-date b{font-weight:500}.mock-schedule .mock-action{width:100%;min-height:30px;padding:8px}
+.mock-chart{width:100%;height:auto;min-height:0;flex:1;overflow:visible}.mock-chart-grid{fill:none;stroke:var(--line);stroke-width:1}.mock-chart-area{fill:var(--green);opacity:.08}.mock-chart-line{stroke:var(--green);fill:none;stroke-width:2.5;stroke-linecap:round}.mock-chart circle{fill:var(--green)}.mock-chart-labels{display:flex;justify-content:space-between;font-size:8px;color:var(--muted)}
+.mock-insights{height:100%;display:grid;grid-template-rows:1fr 1fr;gap:14px}.mock-insights>div{display:flex;flex-direction:column;gap:7px;min-height:0;padding:12px 15px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.mock-insights>div>span{display:flex;gap:7px;align-items:center;font-size:9px;color:var(--muted)}.mock-insights .icon{width:12px;height:12px}.mock-insights .mock-chart{height:55px}.mock-insights>div:last-child .mock-chart{transform:scaleY(.8);transform-origin:bottom}.mock-insights>div:last-child .mock-chart-line{stroke:#7696a7}.mock-insights>div:last-child .mock-chart-area{fill:#7696a7}
+
+.footer-company{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px 30px;border-top:1px solid var(--line);padding-top:25px;font-size:11px;line-height:1.7;color:var(--muted)}
+.footer-company>span:first-child{color:var(--ink)}
+.footer-bottom{margin-top:0;padding-top:0;border-top:0}
+
+@media(max-width:1150px){.platform-mockup{padding:16px;gap:10px}.platform-mockup h4{font-size:15px}.mock-tabs{gap:7px;font-size:7px}.mock-tabs b{padding:6px 7px}.mock-node{font-size:8px;padding:7px}.mock-brain-core{font-size:9px;padding:13px}.mock-calendar{gap:3px}.mock-space p{font-size:8px}}
+@media(min-width:881px) and (max-width:1050px){.walkthrough-scene{grid-template-columns:minmax(0,1fr) minmax(295px,1.4fr) minmax(0,1fr);gap:15px}.platform-mockup{padding:12px}.mock-field{flex-direction:column;align-items:flex-start;gap:7px}.mock-field>i{width:70%}.mock-brand-field{gap:7px}.mock-social-row b{font-size:8px}.mock-node{font-size:7px}.mock-space h4{font-size:13px}}
+@media(max-width:880px){.product-window-left{height:315px}.product-window-right{display:none}.platform-mockup{padding:20px}.platform-mockup h4{font-size:17px}.hero-character{inset:0 0 0 49%}}
+@media(max-width:620px){.hero-stage .hero-copy{grid-column:auto}.hero-stage{padding-bottom:350px}.hero-character{inset:auto 0 0;height:340px;min-height:0;margin:0}.product-window-left{height:185px;width:85%;overflow:hidden}.product-window-bar{height:25px}.product-window-left>.product-window-content{height:160px}.platform-mockup{width:166.667%;height:166.667%;transform:scale(.6);transform-origin:top left;padding:22px;gap:12px}.platform-mockup h4{font-size:19px}.mock-tabs{font-size:10px;gap:16px}.mock-field small,.mock-brand-field small,.mock-social-row b{font-size:12px}.mock-section-label{font-size:12px}.mock-field{padding:9px 12px}.mock-action{font-size:12px;min-height:33px;padding:8px 12px}.mock-calendar>span{font-size:12px}.mock-calendar>small{font-size:11px}.mock-calendar{gap:5px}.mock-chart-labels{font-size:11px}.footer-company{flex-direction:column;gap:5px;font-size:10px;padding-top:20px}}
+@media(max-width:620px) and (min-height:741px){.product-window-left{height:200px}.product-window-left>.product-window-content{height:175px}}
+@media(max-width:880px){.walkthrough-scene{padding-inline:14px}}
+@media(max-width:620px){.walkthrough-scene{padding-inline:0}}
+@media(prefers-reduced-motion:reduce){.mockup-slide{transition:none;transform:none}}
+
+/* Masko-hosted transparent hero animation. WebM is used by Chromium/Firefox;
+   Safari/iOS receives the HEVC+alpha MOV from the same manifest. */
+.hero-mascot-animation{overflow:hidden}
+.masko-mascot-video{display:block;background:transparent;pointer-events:none;user-select:none;-webkit-user-select:none}
+.hero-masko-mascot{width:100%;height:100%;object-fit:contain;object-position:right center;transform:scale(1.08);transform-origin:right center}
+@media(max-width:880px){.hero-masko-mascot{transform:scale(1.04);object-position:58% center}}
+@media(max-width:620px){.hero-masko-mascot{transform:scale(1.08);object-position:center bottom}}

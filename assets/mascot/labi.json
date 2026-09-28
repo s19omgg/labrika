@@ -1,0 +1,19 @@
+{
+  "collection": "Labi",
+  "items": [
+    {
+      "name": "Plush Swagger",
+      "animations": [
+        {
+          "transparent_video_mov": "https://assets.masko.ai/c2031a/labi-91a4/plush-swagger-3bfe119f.mov",
+          "video": "https://assets.masko.ai/c2031a/labi-91a4/plush-swagger-b494afcf.mp4",
+          "transparent_video_webm": "https://assets.masko.ai/c2031a/labi-91a4/plush-swagger-49bf0144.webm",
+          "transparent_video_android_720": "https://assets.masko.ai/c2031a/labi-91a4/plush-swagger-3dc10b3d-720.mp4",
+          "transparent_video_mov_720": "https://assets.masko.ai/c2031a/labi-91a4/plush-swagger-4a9c6700-720.mov",
+          "transparent_video_webm_720": "https://assets.masko.ai/c2031a/labi-91a4/plush-swagger-b55ffcfe-720.webm",
+          "transparent_video_android": "https://assets.masko.ai/c2031a/labi-91a4/plush-swagger-0d9e29d4.mp4"
+        }
+      ]
+    }
+  ]
+}

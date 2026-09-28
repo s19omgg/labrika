@@ -1,8 +1,11 @@
 import {defineConfig} from '@playwright/test';
 
+const port=process.env.LABRICA_TEST_PORT||'3000';
+const baseURL=`http://localhost:${port}`;
+
 export default defineConfig({
   testDir:'./tests',
   reporter:'list',
-  use:{baseURL:'http://localhost:3000',channel:'chrome',headless:true,viewport:{width:1440,height:1000},timezoneId:'Europe/Istanbul',screenshot:'only-on-failure'},
-  webServer:{command:'npm run dev',url:'http://localhost:3000',reuseExistingServer:true},
+  use:{baseURL,channel:'chrome',headless:true,viewport:{width:1440,height:1000},timezoneId:'Europe/Istanbul',screenshot:'only-on-failure'},
+  webServer:{command:`npm run dev -- --port ${port} --strictPort`,url:baseURL,reuseExistingServer:true},
 });
