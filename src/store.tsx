@@ -24,7 +24,7 @@ const Context = createContext<Workspace | null>(null);
 export function WorkspaceProvider({children}: {children: ReactNode}) {
   const [posts, setPosts] = useState<Post[]>(() => readLocal('ygroup-posts-v1', isLabrika ? [] : seedPosts));
   const [brand, setBrand] = useState(() => readLocal('ygroup-brand-v1', initialBrand));
-  const [page, setPage] = useState<Page>('dashboard');
+  const [page, setPage] = useState<Page>(()=>new URLSearchParams(location.search).get('page')==='billing'?'billing':'dashboard');
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [contentFilter, setContentFilter] = useState('all');

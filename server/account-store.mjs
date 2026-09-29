@@ -119,6 +119,17 @@ export function createAccountStore({directory='.data',now=()=>Date.now()}={}){
    account.subscription={planId,startsAt:start.toISOString(),expiresAt:new Date(start.getTime()+rounded*86400000).toISOString(),source:'manual',autoRenew:false};
    log(database,'Выдана подписка',`${account.email} · ${planId.toUpperCase()} · ${rounded} дней · без оплаты`,account.id);save(database);return publicAccount(account);
   },
+  activatePaidSubscription(id,planId,days=30,paymentReference){
+   if(!['min','business','pro'].includes(planId))throw fail(400,'Выберите тариф.');
+   if(!Number.isFinite(days)||days<1||days>3650)throw fail(400,'Укажите срок от 1 до 3650 дней.');
+   const reference=String(paymentReference||'').trim();if(!reference)throw fail(400,'Не указан платёж.');
+   const database=read(),account=find(database,id);account.processedPaymentIds=Array.isArray(account.processedPaymentIds)?account.processedPaymentIds:[];
+   if(account.processedPaymentIds.includes(reference))return publicAccount(account);
+   const timestamp=now(),start=new Date(timestamp),base=Math.max(timestamp,account.subscription?new Date(account.subscription.expiresAt).getTime():0),rounded=Math.round(days);
+   account.subscription={planId,startsAt:start.toISOString(),expiresAt:new Date(base+rounded*86400000).toISOString(),source:'paid',autoRenew:false};
+   account.processedPaymentIds.push(reference);account.processedPaymentIds=account.processedPaymentIds.slice(-500);
+   log(database,'Подписка оплачена',`${account.email} · ${planId.toUpperCase()} · ${rounded} дней · Точка`,account.id);save(database);return publicAccount(account);
+  },
   revokeSubscription(id){const database=read(),account=find(database,id);account.subscription=null;log(database,'Подписка отозвана',account.email,account.id);save(database);return publicAccount(account);},
   extendSubscription(id,days){
    if(!Number.isFinite(days)||days<1||days>3650)throw fail(400,'Укажите срок от 1 до 3650 дней.');

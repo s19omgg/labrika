@@ -23,6 +23,7 @@ test('infrastructure subdomains expose only their intended surface',()=>{
  assert.equal(gate('/api/admin/overview','api.labrica.pro').passed,true);
  assert.equal(gate('/','api.labrica.pro').status,404);
  assert.equal(gate('/api/social/telegram/webhook','hooks.labrica.pro').passed,true);
+ assert.equal(gate('/api/billing/tochka/webhook','hooks.labrica.pro').passed,true);
  assert.equal(gate('/api/auth/session','hooks.labrica.pro').status,404);
  assert.equal(gate('/','status.labrica.pro').url,'/api/health');
  assert.equal(gate('/brand/labrica-symbol.svg','assets.labrica.pro').passed,true);

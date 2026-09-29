@@ -7,7 +7,7 @@ export interface AdminOverview {
  email:{smtp:{configured:boolean;host:string|null;port:number|null;secure:boolean;from:string|null;source:'environment'|'encrypted_file'|'none';lastCheckAt:string|null;status:'not_checked'|'connected'|'error'};verificationEmails:{sent:number;failed:number;lastSuccessAt:string|null;lastFailureAt:string|null;lastError:string|null}};
  ai:{openai:{configured:boolean;status:string;checkedAt:string|null;textModel:string;imageModel:string};higgsfield:{configured:boolean;status:string;checkedAt:string|null;videoModel:string};capabilities:{text:boolean;image:boolean;video:boolean};encoder:boolean};
  social:{workspaceCount:number;connectionCount:number;connectedCount:number;errorCount:number;byPlatform:Record<string,number>;connections:Array<{workspaceId:string;accountId:string|null;platform:string;accountName:string;accountHandle?:string;connectedAt:string;checkedAt:string;status:string;error?:string;account:{id:string;name:string;email:string}|null}>;publications:{total:number;published:number;failed:number}};
- payments:{provider:'none';configured:false;confirmedPayments:number;confirmedRevenue:number;lastWebhookAt:null};
+ payments:{provider:'none'|'tochka';configured:boolean;receipts?:boolean;confirmedPayments:number;confirmedRevenue:number;lastWebhookAt:string|null;lastError?:string|null;lastRequestAt?:string|null;lastSuccessAt?:string|null};
 }
 
 export function useAdminOverview(){

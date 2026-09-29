@@ -42,19 +42,20 @@ export function createRuntimeMonitor({now=()=>Date.now()}={}){
  return{middleware,health,snapshot};
 }
 
-export function createAdminOverview({accountStore,auth,providers,social,monitor,now=()=>Date.now()}){
+export function createAdminOverview({accountStore,auth,providers,social,monitor,billing,now=()=>Date.now()}){
  return()=>{
   const database=accountStore.snapshot(),accounts=database.accounts,onlineThreshold=now()-65000;
   const activeSubscriptions=accounts.filter(account=>account.subscription&&new Date(account.subscription.expiresAt).getTime()>now()).length;
   const socialState=social.adminStatus();
   const accountsById=new Map(accounts.map(account=>[account.id,account]));
+  const paymentState=billing?.adminStatus?.()||{provider:'none',configured:false,confirmedPayments:0,confirmedRevenue:0,lastWebhookAt:null};
   return{
    generatedAt:new Date(now()).toISOString(),
    metrics:{
     accounts:accounts.length,
     online:accounts.filter(account=>account.status==='active'&&account.lastSeenAt&&new Date(account.lastSeenAt).getTime()>onlineThreshold).length,
     activeSubscriptions,
-    confirmedRevenue:0,
+    confirmedRevenue:paymentState.confirmedRevenue,
    },
    server:monitor.snapshot(),
    email:auth.adminStatus(),
@@ -66,7 +67,7 @@ export function createAdminOverview({accountStore,auth,providers,social,monitor,
      return{...connection,account:account?{id:account.id,name:[account.surname,account.name].filter(Boolean).join(' ')||account.name,email:account.email}:null};
     }),
    },
-   payments:{provider:'none',configured:false,confirmedPayments:0,confirmedRevenue:0,lastWebhookAt:null},
+   payments:paymentState,
   };
  };
 }

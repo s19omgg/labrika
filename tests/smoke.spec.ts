@@ -25,6 +25,21 @@ test('LABI AI использует голову маскота без цветн
   await expect(avatar).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
 });
 
+test('карточки возможностей используют новые SVG-иконки',async({page})=>{
+  await page.goto('/');
+  const icons=page.locator('#features .feature-icon img');
+  await expect(icons).toHaveCount(5);
+  const expected=['team.svg','brand-brain.svg','studio.svg','content-plan.svg','analytics.svg'];
+  for(let index=0;index<expected.length;index++){
+    await expect(icons.nth(index)).toHaveAttribute('src',new RegExp(`/landing-assets/feature-icons/${expected[index]}$`));
+    await expect(icons.nth(index)).toBeVisible();
+  }
+  for(const frame of await page.locator('#features .feature-icon').all()){
+    await expect(frame).toHaveCSS('border-top-width','0px');
+    await expect(frame).toHaveCSS('border-radius','0px');
+  }
+});
+
 test('шесть шагов прокрутки показывают макеты вместо скриншотов',async({page})=>{
   await page.goto('/');
   const section=page.locator('#how-it-works');
@@ -153,7 +168,21 @@ test('авторизация и админка LABRICA имеют отдельн
   await page.getByRole('button',{name:'Войти',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Обзор',exact:true})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Состояние LABRICA',exact:true})).toBeVisible();
-  await expect(page.getByText('Провайдер не подключён',{exact:true})).toBeVisible();
+  await expect(page.getByText('Нужны реквизиты',{exact:true})).toBeVisible();
+});
+
+test('оформление подписки использует платёжную страницу Точки',async({page})=>{
+  const account={id:'payment-owner',name:'Сергей',surname:'Байгот',phone:'+79990000000',email:'owner@example.test',status:'active',createdAt:'2026-09-29T00:00:00.000Z',lastSeenAt:'2026-09-29T00:00:00.000Z',subscription:null};
+  await page.route('**/api/auth/session',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({authenticated:true,account})}));
+  await page.route('**/api/auth/heartbeat',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({account})}));
+  await page.route('**/api/billing/checkout',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Оплата через Точку ещё не настроена на сервере.'})}));
+  await page.goto('/app/?page=billing');
+  await expect(page.getByRole('heading',{name:'Подписка',exact:true})).toBeVisible();
+  await page.locator('.billing-plan').filter({hasText:'MIN'}).getByRole('button',{name:'Выбрать тариф'}).click();
+  await expect(page.locator('.billing-payment-method')).toContainText('Точка Банк');
+  await expect(page.getByText('Карта или СБП на защищённой странице банка',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:/Перейти к оплате/}).click();
+  await expect(page.getByRole('alert')).toHaveText('Оплата через Точку ещё не настроена на сервере.');
 });
 
 test('регистрация требует отдельные юридические согласия',async({page})=>{

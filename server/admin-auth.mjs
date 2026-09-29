@@ -9,7 +9,7 @@ const cookieValue=(req,value,maxAge)=>{
  return `labrica_admin_session=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure?'; Secure':''}`;
 };
 
-export function createAdminAuthHandler({login=process.env.ADMIN_LOGIN||'sergiolabenzo',password=process.env.ADMIN_PASSWORD||'',secret=process.env.ADMIN_SESSION_SECRET||randomBytes(32).toString('hex'),now=()=>Date.now(),accountStore,overview=()=>null}={}){
+export function createAdminAuthHandler({login=process.env.ADMIN_LOGIN||'sergiolabenzo',password=process.env.ADMIN_PASSWORD||'',secret=process.env.ADMIN_SESSION_SECRET||randomBytes(32).toString('hex'),now=()=>Date.now(),accountStore,overview=()=>null,billing}={}){
  const accounts=accountStore||createAccountStore({now});
  const attempts=new Map();
  const sign=payload=>createHmac('sha256',secret).update(payload).digest('base64url');
@@ -37,7 +37,8 @@ export function createAdminAuthHandler({login=process.env.ADMIN_LOGIN||'sergiola
 
    if(path==='/api/admin/billing'&&req.method==='GET'){
     const snapshot=accounts.snapshot();
-    return reply(200,{...snapshot,payments:[],checkouts:[],usage:[],config:{provider:'none',merchantId:'',legalName:'',supportEmail:'',currency:'RUB'}});
+    const paymentSnapshot=billing?.snapshot?.()||{payments:[],checkouts:[],config:{provider:'none',merchantId:'',legalName:'',supportEmail:'',currency:'RUB'}};
+    return reply(200,{...snapshot,...paymentSnapshot,usage:[]});
    }
 
    const match=path.match(/^\/api\/admin\/accounts\/([^/]+)(?:\/(.*))?$/);

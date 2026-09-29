@@ -16,7 +16,7 @@ function notFound(res){res.writeHead(404,{'Content-Type':'text/plain; charset=ut
 export function infrastructureGate(req,res,next){
  const host=hostname(req),pathname=(req.url||'/').split('?')[0];
  if(host===infrastructureHosts.status){if(pathname==='/')req.url='/api/health';else if(pathname!=='/api/health')return notFound(res);return next();}
- if(host===infrastructureHosts.hooks){if(pathname!=='/api/social/telegram/webhook')return notFound(res);return next();}
+ if(host===infrastructureHosts.hooks){if(!['/api/social/telegram/webhook','/api/billing/tochka/webhook'].includes(pathname))return notFound(res);return next();}
  if(host===infrastructureHosts.api){if(!pathname.startsWith('/api/'))return notFound(res);return next();}
  if(host===infrastructureHosts.assets){if(!['/assets/','/fonts/','/brand/','/landing-assets/'].some(prefix=>pathname.startsWith(prefix)))return notFound(res);return next();}
  if(host===infrastructureHosts.media||host===infrastructureHosts.files)return notFound(res);

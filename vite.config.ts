@@ -11,14 +11,16 @@ import {createProviderService} from './server/provider-service.mjs';
 import {createCreativeHandler} from './server/creative-service.mjs';
 import {createApprovalHandler} from './server/approvals.mjs';
 import {editionRoutes,infrastructureGate} from './server/routing.mjs';
+import {createBillingHandler} from './server/billing-service.mjs';
 
 const accountStore=createAccountStore();
 const auth=createAuthHandler({accountStore});
+const billing=createBillingHandler({accountStore,resolveAccount:req=>auth.accountForRequest(req)});
 const social=createSocialHandler({resolveAccount:req=>auth.accountForRequest(req)});
 const providers=createProviderService();
 const monitor=createRuntimeMonitor();
-const overview=createAdminOverview({accountStore,auth,providers,social,monitor});
-const adminAuth=createAdminAuthHandler({accountStore,overview});
+const overview=createAdminOverview({accountStore,auth,providers,social,monitor,billing});
+const adminAuth=createAdminAuthHandler({accountStore,overview,billing});
 const creative=createCreativeHandler({
   resolveAdapter:req=>providers.creativeAdapter(String(req.headers['x-product-edition']||'labrika')),
   resolveCapabilities:req=>providers.capabilities(String(req.headers['x-product-edition']||'labrika')),
@@ -26,8 +28,8 @@ const creative=createCreativeHandler({
 const approval=createApprovalHandler({issuerKey:process.env.APPROVAL_ISSUER_KEY});
 const api={
   name:'labrika-local-api',
-  configureServer(server){server.middlewares.use(monitor.middleware);server.middlewares.use(infrastructureGate);server.middlewares.use(monitor.health);server.middlewares.use(adminAuth);server.middlewares.use(auth);server.middlewares.use(providers.handler);server.middlewares.use(social);server.middlewares.use(creative);server.middlewares.use(approval);server.middlewares.use(editionRoutes);},
-  configurePreviewServer(server){server.middlewares.use(monitor.middleware);server.middlewares.use(infrastructureGate);server.middlewares.use(monitor.health);server.middlewares.use(adminAuth);server.middlewares.use(auth);server.middlewares.use(providers.handler);server.middlewares.use(social);server.middlewares.use(creative);server.middlewares.use(approval);server.middlewares.use(editionRoutes);},
+  configureServer(server){server.middlewares.use(monitor.middleware);server.middlewares.use(infrastructureGate);server.middlewares.use(monitor.health);server.middlewares.use(adminAuth);server.middlewares.use(auth);server.middlewares.use(billing);server.middlewares.use(providers.handler);server.middlewares.use(social);server.middlewares.use(creative);server.middlewares.use(approval);server.middlewares.use(editionRoutes);},
+  configurePreviewServer(server){server.middlewares.use(monitor.middleware);server.middlewares.use(infrastructureGate);server.middlewares.use(monitor.health);server.middlewares.use(adminAuth);server.middlewares.use(auth);server.middlewares.use(billing);server.middlewares.use(providers.handler);server.middlewares.use(social);server.middlewares.use(creative);server.middlewares.use(approval);server.middlewares.use(editionRoutes);},
 };
 
 export default defineConfig(({mode})=>{
